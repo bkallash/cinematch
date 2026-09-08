@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from openai import AsyncOpenAI
 from app.config import settings
@@ -21,6 +22,32 @@ class TasteDossierService:
         return self._client
 
     @staticmethod
+    def _format_age(ts_str: Optional[str]) -> str:
+        """Return human-readable relative age for a rating timestamp."""
+        if not ts_str:
+            return "rated long ago"
+        try:
+            dt = datetime.fromisoformat(str(ts_str).strip().replace(" ", "T"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
+            days = max(0, int((now - dt).total_seconds() // 86400))
+            if days == 0:
+                return "rated today"
+            elif days == 1:
+                return "rated 1 day ago"
+            elif days < 30:
+                return f"rated {days} days ago"
+            elif days < 365:
+                months = max(1, round(days / 30.4))
+                return f"rated {months} month{'s' if months != 1 else ''} ago"
+            else:
+                years = max(1, round(days / 365.25))
+                return f"rated {years} year{'s' if years != 1 else ''} ago"
+        except Exception:
+            return "rated long ago"
+
+    @staticmethod
     def mark_dirty(user_id: str = "default_user"):
         """Flag the user's taste dossier as needing re-synthesis."""
         with get_db() as conn:
@@ -37,11 +64,12 @@ class TasteDossierService:
             ).fetchone()
 
             ratings = conn.execute("""
-                SELECT r.score, r.aspect_tags, r.notes, t.title, t.media_type,
-                       t.release_year, t.genres, t.director_or_creator, t.cast_top
+                SELECT r.score, r.aspect_tags, r.notes, r.created_at, r.updated_at,
+                       t.title, t.media_type, t.release_year, t.genres,
+                       t.director_or_creator, t.cast_top
                 FROM ratings r
                 JOIN titles t ON r.title_id = t.id
-                ORDER BY r.created_at DESC
+                ORDER BY COALESCE(r.updated_at, r.created_at) DESC
             """).fetchall()
 
         ratings_count = len(ratings)
@@ -104,10 +132,11 @@ class TasteDossierService:
         for r in ratings:
             genres_list = json.loads(r["genres"] or "[]")
             tags_list = json.loads(r["aspect_tags"] or "[]")
+            age_label = self._format_age(r["updated_at"] or r["created_at"])
             item_desc = (
                 f"'{r['title']}' ({r['release_year'] or 'Unknown'}, {r['media_type']}) - "
                 f"Genres: {', '.join(genres_list)} | Director: {r['director_or_creator'] or 'N/A'} | "
-                f"Rating: {r['score']}/6"
+                f"Rating: {r['score']}/6 ({age_label})"
             )
             if tags_list:
                 item_desc += f" | Tags: {', '.join(tags_list)}"
@@ -127,6 +156,7 @@ class TasteDossierService:
 You are a master film theorist, narrative analyst, and cinephile psychologist.
 Analyze the viewing history and ratings below to synthesize this user's psychological entertainment DNA.
 The rating scale is strictly 1 to 6 (1-2 = Hated/Disliked, 3 = Mediocre/Tolerated, 4 = Good, 5 = Great, 6 = Masterpiece/Favorite).
+Each rating is annotated with how long ago it was logged (e.g. 'rated 3 days ago'). Weight recent ratings more heavily than older ones when analyzing preferences.
 
 ### User's Rating History:
 [Masterpieces & Favorites (5-6 / 6)]:
@@ -148,7 +178,7 @@ Respond ONLY with a valid JSON object matching this schema:
   "creator_affinities": ["directors, writers, or actors they gravitate toward"],
   "atmospheric_preferences": ["specific visual moods, color tones, musical textures, or settings"],
   "narrative_tropes": ["story structures or character archetypes they enjoy"],
-  "full_summary": "A 2-paragraph evocative, sharp analysis written directly to the user ('Your taste leans toward...'). Highlight what bridges their highest-rated favorites and why their dislikes fell flat."
+  "full_summary": "A 2-paragraph evocative, sharp analysis written directly to the user ('Your taste leans toward...'). Highlight what bridges their highest-rated favorites and why their dislikes fell flat. Explicitly note in the summary if recent taste diverges from historical taste (e.g. recent drift toward new genres, directors, or tonal shifts)."
 }}
 """
 
