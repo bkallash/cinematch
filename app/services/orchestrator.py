@@ -2,12 +2,13 @@ import asyncio
 import json
 import logging
 import random
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set
 import numpy as np
 from openai import AsyncOpenAI
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, parse_utc_timestamp
 from app.services.embeddings import embedding_service
 from app.services.tmdb import tmdb_service
 from app.services.taste_dossier import taste_dossier_service
@@ -22,21 +23,16 @@ LONG_TERM_WEIGHT: float = 0.7
 RECENT_WEIGHT: float = 0.3
 
 
-def _parse_timestamp(ts: Any) -> Optional[datetime]:
-    """Safely parse SQLite or ISO timestamp string to timezone-aware UTC datetime."""
-    if not ts:
-        return None
-    if isinstance(ts, datetime):
-        if ts.tzinfo is None:
-            return ts.replace(tzinfo=timezone.utc)
-        return ts
-    try:
-        dt = datetime.fromisoformat(str(ts).strip().replace(" ", "T"))
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt
-    except Exception:
-        return None
+@dataclass
+class TasteVectorSignal:
+    taste_vector: Optional[np.ndarray]
+    liked_genres: Dict[str, int]
+    liked_creators: Dict[str, int]
+    liked_count: int
+    loved_titles: List[Any]
+    rating_rows: List[Any]
+    ratings_count: int
+    last_rated_at: Optional[str]
 
 
 class OrchestratorService:
@@ -328,11 +324,10 @@ Return strictly a JSON object matching this schema:
 
         return inserted_ids
 
-    def _build_taste_profile(
+    def _build_taste_vector_and_stats(
         self,
-        user_id: str = "default_user",
-        exclude_title_ids: Optional[Set[int]] = None,
-    ) -> Dict[str, Any]:
+        exclude_rating_ids: Optional[Set[int]] = None,
+    ) -> TasteVectorSignal:
         """Builds a recency-weighted, dual-window blended taste vector and aggregate stats.
 
         Blends:
@@ -356,8 +351,8 @@ Return strictly a JSON object matching this schema:
             """
             rating_rows = conn.execute(query).fetchall()
 
-        if exclude_title_ids:
-            rating_rows = [r for r in rating_rows if r["id"] not in exclude_title_ids]
+        if exclude_rating_ids:
+            rating_rows = [r for r in rating_rows if r["rating_id"] not in exclude_rating_ids]
 
         liked_genres: Dict[str, int] = {}
         liked_creators: Dict[str, int] = {}
@@ -400,7 +395,7 @@ Return strictly a JSON object matching this schema:
                 continue
 
             # Recency decay for long-term vector
-            dt = _parse_timestamp(ts)
+            dt = parse_utc_timestamp(ts)
             if dt is None:
                 recency_factor = RECENCY_FLOOR
             else:
@@ -441,16 +436,16 @@ Return strictly a JSON object matching this schema:
             norm_b = np.linalg.norm(blended)
             final_vec = (blended / norm_b).astype(np.float32) if norm_b > 0 else long_term_vec
 
-        return {
-            "taste_vector": final_vec,
-            "liked_genres": liked_genres,
-            "liked_creators": liked_creators,
-            "liked_count": liked_count,
-            "loved_titles": loved_titles,
-            "rating_rows": rating_rows,
-            "ratings_count": len(rating_rows),
-            "last_rated_at": last_rated_at,
-        }
+        return TasteVectorSignal(
+            taste_vector=final_vec,
+            liked_genres=liked_genres,
+            liked_creators=liked_creators,
+            liked_count=liked_count,
+            loved_titles=loved_titles,
+            rating_rows=rating_rows,
+            ratings_count=len(rating_rows),
+            last_rated_at=last_rated_at,
+        )
 
     async def get_personalized_picks(
         self,
@@ -465,7 +460,7 @@ Return strictly a JSON object matching this schema:
         1. Check for_you_cache; if cached picks exist, force_refresh is False, and ratings
            have not changed (count and last_rated_at match), re-hydrate dynamic user state
            (watchlist, ratings) and return immediately.
-        2. If dirty or refreshed, build blended taste vector via `_build_taste_profile`
+        2. If dirty or refreshed, build blended taste vector via `_build_taste_vector_and_stats`
            combining exponential decay on long-term ratings and recent window ratings.
         3. Vector-search unrated Titles (rated Titles excluded; skipped Titles
            included since Deck skip means "haven't seen", not "disliked").
@@ -553,14 +548,14 @@ Return strictly a JSON object matching this schema:
                             "personalized": was_personalized,
                         }
 
-        profile = self._build_taste_profile(user_id=user_id)
-        rating_rows = profile["rating_rows"]
-        ratings_count = profile["ratings_count"]
-        liked_count = profile["liked_count"]
-        liked_genres = profile["liked_genres"]
-        liked_creators = profile["liked_creators"]
-        taste_vec = profile["taste_vector"]
-        last_rated_at = profile["last_rated_at"]
+        signal = self._build_taste_vector_and_stats()
+        rating_rows = signal.rating_rows
+        ratings_count = signal.ratings_count
+        liked_count = signal.liked_count
+        liked_genres = signal.liked_genres
+        liked_creators = signal.liked_creators
+        taste_vec = signal.taste_vector
+        last_rated_at = signal.last_rated_at
 
         dossier = await taste_dossier_service.get_or_update_dossier(user_id=user_id)
 
@@ -666,12 +661,12 @@ Return strictly a JSON object matching this schema:
 
         # Select loved titles matching the requested media type first
         media_loved = [
-            r for r in profile["loved_titles"]
+            r for r in signal.loved_titles
             if r["media_type"] == normalized_media
         ]
         if not media_loved:
             # Fall back to loved titles from any media type if none exist for this type
-            media_loved = profile["loved_titles"]
+            media_loved = signal.loved_titles
 
         # --- 3. Rerank against the Taste Dossier (LLM when available) ---
         if settings.OPENROUTER_API_KEY:
@@ -1226,16 +1221,16 @@ Respond ONLY in valid JSON matching this schema:
 
     async def get_deck_suggestion(self, exclude_ids: Optional[set] = None) -> Optional[Dict[str, Any]]:
         """Returns a single top unseen candidate personalized to the user's taste."""
-        profile = self._build_taste_profile(exclude_title_ids=exclude_ids)
-        if profile["ratings_count"] < 2:
+        signal = self._build_taste_vector_and_stats()
+        if signal.ratings_count < 2:
             return None
 
-        taste_vec = profile["taste_vector"]
+        taste_vec = signal.taste_vector
         if taste_vec is None:
             return None
 
-        liked_genres = profile["liked_genres"]
-        liked_creators = profile["liked_creators"]
+        liked_genres = signal.liked_genres
+        liked_creators = signal.liked_creators
 
         with get_db() as conn:
             rows = conn.execute("""

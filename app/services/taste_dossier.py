@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from openai import AsyncOpenAI
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, parse_utc_timestamp
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +24,10 @@ class TasteDossierService:
     @staticmethod
     def _format_age(ts_str: Optional[str]) -> str:
         """Return human-readable relative age for a rating timestamp."""
-        if not ts_str:
+        dt = parse_utc_timestamp(ts_str)
+        if dt is None:
             return "rated long ago"
         try:
-            dt = datetime.fromisoformat(str(ts_str).strip().replace(" ", "T"))
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
             now = datetime.now(timezone.utc)
             days = max(0, int((now - dt).total_seconds() // 86400))
             if days == 0:

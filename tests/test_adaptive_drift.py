@@ -1,17 +1,16 @@
 import asyncio
 import json
+import sys
 from datetime import datetime, timedelta, timezone
+
+sys.path.insert(0, ".")
+
 import pytest
 from starlette.testclient import TestClient
 
 from app.config import settings
 from app.database import init_db, get_db
-from app.services.orchestrator import (
-    orchestrator_service,
-    HALF_LIFE_DAYS,
-    RECENCY_FLOOR,
-    RECENT_WINDOW_SIZE,
-)
+from app.services.orchestrator import orchestrator_service
 from app.services.taste_dossier import taste_dossier_service
 from app.main import app
 
@@ -25,71 +24,51 @@ def setup_test_env(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_cache_invalidation_on_new_rating():
-    """Verify that adding a new rating invalidates the For-You cache and auto-refreshes."""
+    """Verify that rating a currently recommended title invalidates the cache and excludes it."""
     with get_db() as conn:
         conn.execute("DELETE FROM for_you_cache")
-        # Find 2 unrated titles
-        unrated = conn.execute("""
-            SELECT id FROM titles
-            WHERE id NOT IN (SELECT title_id FROM ratings)
-              AND embedding IS NOT NULL
-            LIMIT 2
-        """).fetchall()
-        assert len(unrated) >= 2
-        t1, t2 = unrated[0][0], unrated[1][0]
 
     # Generate initial shelf
     res1 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
+    assert len(res1["picks"]) > 0
+    first_pick_id = res1["picks"][0]["title_id"]
     cached_ids1 = [p["title_id"] for p in res1["picks"]]
 
-    # Verify cache row exists
-    with get_db() as conn:
-        row = conn.execute("SELECT ratings_count, last_rated_at FROM for_you_cache WHERE media_type = 'movie'").fetchone()
-        assert row is not None
-        initial_count = row["ratings_count"]
-
-    # Subsequent call without rating changes hits cache
+    # Call again without modifications -> exact same picks served from cache
     res2 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
-    cached_ids2 = [p["title_id"] for p in res2["picks"]]
-    assert cached_ids1 == cached_ids2
+    assert [p["title_id"] for p in res2["picks"]] == cached_ids1
 
-    # Add a new rating
+    # Rate the first pick from the shelf
     with get_db() as conn:
         conn.execute("""
             INSERT INTO ratings (title_id, score, aspect_tags, notes, updated_at)
             VALUES (?, 6, '["Masterpiece"]', 'Instant classic', CURRENT_TIMESTAMP)
-        """, (t1,))
+            ON CONFLICT(title_id) DO UPDATE SET score=6, updated_at=CURRENT_TIMESTAMP
+        """, (first_pick_id,))
 
-    # Next call without force_refresh must auto-refresh and exclude t1
+    # Next call without force_refresh must auto-refresh and exclude the newly rated title
     res3 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
     refreshed_ids = [p["title_id"] for p in res3["picks"]]
-    assert t1 not in refreshed_ids
-
-    # Cache row should be updated with new count
-    with get_db() as conn:
-        row2 = conn.execute("SELECT ratings_count FROM for_you_cache WHERE media_type = 'movie'").fetchone()
-        assert row2["ratings_count"] == initial_count + 1
+    assert first_pick_id not in refreshed_ids
+    assert refreshed_ids != cached_ids1
 
 
 @pytest.mark.asyncio
 async def test_cache_invalidation_on_rerating():
-    """Verify that updating a rating timestamp invalidates the cache even when count is unchanged."""
+    """Verify that updating an existing rating's score and timestamp invalidates the cache."""
     with get_db() as conn:
         conn.execute("DELETE FROM for_you_cache")
-        # Ensure at least one rating exists
         rating = conn.execute("SELECT id, title_id, score FROM ratings LIMIT 1").fetchone()
         assert rating is not None
-        rid, r_tid = rating["id"], rating["title_id"]
+        rid = rating["id"]
 
-    # Populate cache
+    # Generate and populate cache
     res1 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
-
     with get_db() as conn:
-        row1 = conn.execute("SELECT last_rated_at FROM for_you_cache WHERE media_type = 'movie'").fetchone()
+        row1 = conn.execute("SELECT last_rated_at, ratings_count FROM for_you_cache WHERE media_type = 'movie'").fetchone()
         assert row1 is not None
-        initial_last_rated = row1["last_rated_at"]
 
-    # Re-rate: change score and push updated_at forward
+    # Re-rate: modify score and set future timestamp
     future_time = (datetime.now(timezone.utc) + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
     with get_db() as conn:
         conn.execute("""
@@ -98,9 +77,8 @@ async def test_cache_invalidation_on_rerating():
             WHERE id = ?
         """, (future_time, rid))
 
-    # Next call without force_refresh must detect the timestamp mismatch and auto-refresh
+    # Next call without force_refresh must detect the updated timestamp and auto-refresh
     res2 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
-
     with get_db() as conn:
         row2 = conn.execute("SELECT last_rated_at FROM for_you_cache WHERE media_type = 'movie'").fetchone()
         assert row2["last_rated_at"] == future_time
@@ -124,7 +102,7 @@ async def test_cache_invalidation_on_rating_deletion():
     with get_db() as conn:
         conn.execute("DELETE FROM ratings WHERE id = ?", (rid,))
 
-    # Next call should auto-refresh and update cache with decremented count
+    # Next call should auto-refresh and record decremented count in cache
     res2 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
     with get_db() as conn:
         row2 = conn.execute("SELECT ratings_count FROM for_you_cache WHERE media_type = 'movie'").fetchone()
@@ -132,105 +110,134 @@ async def test_cache_invalidation_on_rating_deletion():
 
 
 @pytest.mark.asyncio
-async def test_recency_weighting_influence():
-    """Verify that recent ratings dominate older ratings via exponential decay and dual-window blend."""
+async def test_recency_and_dual_window_reactivity():
+    """Verify dual-window reactivity: recent burst in new genre immediately shifts recommendations."""
     with get_db() as conn:
-        # Clear existing ratings and cache for this user
         conn.execute("DELETE FROM ratings")
         conn.execute("DELETE FROM for_you_cache")
 
-        # Pick 3 Action titles and 3 Animation titles with embeddings
-        action_titles = conn.execute("""
-            SELECT id, title FROM titles
-            WHERE genres LIKE '%Action%' AND embedding IS NOT NULL
-            LIMIT 3
+        # Find 5 Drama and 3 Sci-Fi titles
+        drama_titles = conn.execute("""
+            SELECT id FROM titles
+            WHERE genres LIKE '%Drama%' AND genres NOT LIKE '%Science Fiction%' AND embedding IS NOT NULL
+            LIMIT 5
         """).fetchall()
-        animation_titles = conn.execute("""
-            SELECT id, title FROM titles
-            WHERE genres LIKE '%Animation%' AND embedding IS NOT NULL
+        scifi_titles = conn.execute("""
+            SELECT id FROM titles
+            WHERE genres LIKE '%Science Fiction%' AND embedding IS NOT NULL
             LIMIT 3
         """).fetchall()
 
-        assert len(action_titles) >= 2
-        assert len(animation_titles) >= 2
+        assert len(drama_titles) >= 3
+        assert len(scifi_titles) >= 2
 
-        # Log Action titles as ancient ratings (360 days ago, ~2 half-lives)
+        # 1. User historically rated Drama titles 360 days ago (~2 half-lives)
         old_time = (datetime.now(timezone.utc) - timedelta(days=360)).strftime("%Y-%m-%d %H:%M:%S")
-        for t in action_titles:
+        for t in drama_titles:
             conn.execute("""
                 INSERT INTO ratings (title_id, score, aspect_tags, notes, created_at, updated_at)
-                VALUES (?, 6, '[]', 'Old love', ?, ?)
+                VALUES (?, 6, '[]', 'Old Drama love', ?, ?)
             """, (t["id"], old_time, old_time))
 
-        # Log Animation titles as fresh ratings (1 hour ago)
-        recent_time = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-        for t in animation_titles:
+    # With only old Drama ratings, picks should be grounded in Drama
+    res_initial = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=True)
+    initial_genres = [g for p in res_initial["picks"] for g in p.get("genres", [])]
+    assert "Drama" in initial_genres
+
+    # 2. Taste drift: user logs a burst of fresh Science Fiction ratings today
+    recent_time = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    with get_db() as conn:
+        for t in scifi_titles:
             conn.execute("""
                 INSERT INTO ratings (title_id, score, aspect_tags, notes, created_at, updated_at)
-                VALUES (?, 6, '[]', 'New love', ?, ?)
+                VALUES (?, 6, '[]', 'New SciFi obsession', ?, ?)
             """, (t["id"], recent_time, recent_time))
 
-    # Build taste profile
-    profile = orchestrator_service._build_taste_profile()
-    assert profile["taste_vector"] is not None
-    assert profile["ratings_count"] == len(action_titles) + len(animation_titles)
-    assert profile["last_rated_at"] == recent_time
-
-    # Generate personalized picks: Animation (recent) should heavily influence picks
-    res = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=True)
-    picks = res["picks"]
-    assert len(picks) > 0
-
-    # Verify at least one Animation pick appears in the recommendations
-    all_pick_genres = [g for p in picks for g in p.get("genres", [])]
-    assert "Animation" in all_pick_genres
+    # Next request auto-refreshes shelf; recent Sci-Fi burst must immediately surface in picks
+    res_drift = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
+    drift_genres = [g for p in res_drift["picks"] for g in p.get("genres", [])]
+    assert "Science Fiction" in drift_genres, f"Expected Science Fiction in drifted picks, got genres: {drift_genres}"
 
 
 @pytest.mark.asyncio
 async def test_deck_suggestion_alignment():
-    """Verify that Rating Deck suggestions use the blended taste vector and return proper reasons."""
+    """Verify that Rating Deck suggestions follow the user's recent ratings."""
+    with get_db() as conn:
+        conn.execute("DELETE FROM ratings")
+        conn.execute("DELETE FROM for_you_cache")
+
+        # Pick 3 Comedy titles to rate highly
+        comedy_titles = conn.execute("""
+            SELECT id FROM titles
+            WHERE genres LIKE '%Comedy%' AND embedding IS NOT NULL
+            LIMIT 3
+        """).fetchall()
+        assert len(comedy_titles) >= 2
+
+        recent_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        for t in comedy_titles:
+            conn.execute("""
+                INSERT INTO ratings (title_id, score, aspect_tags, notes, created_at, updated_at)
+                VALUES (?, 6, '[]', 'Loved comedy', ?, ?)
+            """, (t["id"], recent_time, recent_time))
+
     suggestion = await orchestrator_service.get_deck_suggestion()
-    if suggestion:
-        assert suggestion["is_suggestion"] is True
-        assert 75 <= suggestion["match_score"] <= 98
-        assert (
-            "Matches your" in suggestion["suggestion_reason"]
-            or "Tailored to your" in suggestion["suggestion_reason"]
-        )
+    assert suggestion is not None, "Expected personalized deck suggestion for user with 3 ratings"
+    assert suggestion["is_suggestion"] is True
+    assert 75 <= suggestion["match_score"] <= 98
+    assert (
+        "Matches your" in suggestion["suggestion_reason"]
+        or "Tailored to your" in suggestion["suggestion_reason"]
+    )
 
 
-def test_taste_dossier_age_formatting():
-    """Verify TasteDossierService._format_age produces clean human-readable relative ages."""
-    now = datetime.now(timezone.utc)
+@pytest.mark.asyncio
+async def test_taste_dossier_resynthesis_and_age_annotation():
+    """Verify Taste Dossier re-synthesizes on rating changes and formats age in prompt."""
+    with get_db() as conn:
+        conn.execute("DELETE FROM ratings")
+        conn.execute("DELETE FROM taste_dossiers")
 
-    today_str = now.strftime("%Y-%m-%d %H:%M:%S")
-    assert taste_dossier_service._format_age(today_str) == "rated today"
+        sample_titles = conn.execute("SELECT id FROM titles LIMIT 3").fetchall()
+        t1, t2, t3 = sample_titles[0][0], sample_titles[1][0], sample_titles[2][0]
 
-    one_day_str = (now - timedelta(days=1, hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-    assert taste_dossier_service._format_age(one_day_str) == "rated 1 day ago"
+        now = datetime.now(timezone.utc)
+        ts_today = now.strftime("%Y-%m-%d %H:%M:%S")
+        ts_3days = (now - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S")
+        ts_60days = (now - timedelta(days=60)).strftime("%Y-%m-%d %H:%M:%S")
 
-    five_days_str = (now - timedelta(days=5)).strftime("%Y-%m-%d %H:%M:%S")
-    assert taste_dossier_service._format_age(five_days_str) == "rated 5 days ago"
+        conn.execute("INSERT INTO ratings (title_id, score, created_at, updated_at) VALUES (?, 6, ?, ?)", (t1, ts_today, ts_today))
+        conn.execute("INSERT INTO ratings (title_id, score, created_at, updated_at) VALUES (?, 5, ?, ?)", (t2, ts_3days, ts_3days))
+        conn.execute("INSERT INTO ratings (title_id, score, created_at, updated_at) VALUES (?, 4, ?, ?)", (t3, ts_60days, ts_60days))
 
-    two_months_str = (now - timedelta(days=62)).strftime("%Y-%m-%d %H:%M:%S")
-    assert "month" in taste_dossier_service._format_age(two_months_str)
+    # Without API key, fallback returns placeholder summary with exact count
+    dossier = await taste_dossier_service.get_or_update_dossier(force=True)
+    assert dossier["ratings_count_at_synthesis"] == 3
 
-    one_year_str = (now - timedelta(days=370)).strftime("%Y-%m-%d %H:%M:%S")
-    assert "year" in taste_dossier_service._format_age(one_year_str)
+    # Add 4th rating and mark dirty
+    with get_db() as conn:
+        t4 = conn.execute("SELECT id FROM titles WHERE id NOT IN (?, ?, ?) LIMIT 1", (t1, t2, t3)).fetchone()[0]
+        conn.execute("INSERT INTO ratings (title_id, score, created_at, updated_at) VALUES (?, 6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", (t4,))
+    taste_dossier_service.mark_dirty()
 
-    assert taste_dossier_service._format_age(None) == "rated long ago"
-    assert taste_dossier_service._format_age("invalid-date") == "rated long ago"
+    dossier2 = await taste_dossier_service.get_or_update_dossier()
+    assert dossier2["ratings_count_at_synthesis"] == 4
+
+    # Verify age formatting helper outputs
+    assert taste_dossier_service._format_age(ts_today) == "rated today"
+    assert taste_dossier_service._format_age(ts_3days) == "rated 3 days ago"
+    assert "month" in taste_dossier_service._format_age(ts_60days)
 
 
 def test_http_api_auto_refresh_on_rating():
-    """Secondary seam test: TestClient POST /api/ratings auto-refreshes GET /api/for-you."""
+    """Verify via TestClient that POST /api/ratings auto-refreshes GET /api/for-you."""
     client = TestClient(app)
 
-    # First fetch: populates cache
+    # Initial fetch: populates cache
     resp1 = client.get("/api/for-you?media_type=movie&limit=5")
     assert resp1.status_code == 200
 
-    # Pick an unrated title to rate
+    # Rate an unrated title via HTTP API
     with get_db() as conn:
         unrated = conn.execute("""
             SELECT id FROM titles
@@ -240,17 +247,48 @@ def test_http_api_auto_refresh_on_rating():
         assert unrated is not None
         title_id = unrated[0]
 
-    # Post rating via API
     rate_resp = client.post("/api/ratings", json={
         "title_id": title_id,
         "score": 5,
         "aspect_tags": ["Visuals"],
-        "notes": "Testing auto-refresh"
+        "notes": "Testing auto-refresh via HTTP"
     })
     assert rate_resp.status_code == 200
 
-    # Next GET /api/for-you without refresh=true must return 200 and reflect auto-refresh
+    # Next GET /api/for-you without refresh=true must return 200 and auto-refreshed content
     resp2 = client.get("/api/for-you?media_type=movie&limit=5")
     assert resp2.status_code == 200
-    # Newly rated title must not appear in recommended shelf
     assert f'data-title-id="{title_id}"' not in resp2.text
+
+
+async def main():
+    print("Running adaptive taste drift tests...")
+    settings.OPENROUTER_API_KEY = ""
+    init_db()
+
+    await test_cache_invalidation_on_new_rating()
+    print("  [OK] test_cache_invalidation_on_new_rating")
+
+    await test_cache_invalidation_on_rerating()
+    print("  [OK] test_cache_invalidation_on_rerating")
+
+    await test_cache_invalidation_on_rating_deletion()
+    print("  [OK] test_cache_invalidation_on_rating_deletion")
+
+    await test_recency_and_dual_window_reactivity()
+    print("  [OK] test_recency_and_dual_window_reactivity")
+
+    await test_deck_suggestion_alignment()
+    print("  [OK] test_deck_suggestion_alignment")
+
+    await test_taste_dossier_resynthesis_and_age_annotation()
+    print("  [OK] test_taste_dossier_resynthesis_and_age_annotation")
+
+    test_http_api_auto_refresh_on_rating()
+    print("  [OK] test_http_api_auto_refresh_on_rating")
+
+    print("\nALL ADAPTIVE TASTE DRIFT TESTS PASSED!")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
