@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}CineMatch - For You{% endblock %}
+
+{% block content %}
+<div class="cm-stage-browse">
+    <p class="cm-eyebrow">For You <span class="dot">·</span> <span><strong>{{ ratings_count or 0 }}</strong> rated</span></p>
+    <h1 class="cm-h1">Made for your taste</h1>
+
+    {% if not personalized %}
+    <div class="cm-card p-4 mt-5 flex flex-wrap items-center justify-between gap-3 bg-notion-paleYellow border-notion-yellowBold/40">
+        <p class="text-sm text-notion-charcoal">Rate at least one Title and this shelf becomes truly personal.</p>
+        <a href="/deck" class="px-4 py-2 rounded-lg bg-notion-ink text-white text-sm font-medium hover:bg-black">Open the Deck</a>
+    </div>
+    {% endif %}
+
+    <div class="flex flex-wrap items-center gap-2 mt-5">
+        <div class="flex items-center bg-notion-surface border border-notion-hairline p-0.5 rounded-lg text-[13px] font-medium" role="group" aria-label="Title type">
+            <a href="/for-you?media_type=movie" class="px-3 py-1.5 rounded-md transition-all {% if media_type == 'movie' %}bg-notion-canvas shadow-sm text-notion-ink border border-notion-hairline{% else %}text-notion-slate hover:text-notion-ink border border-transparent{% endif %}">Movies</a>
+            <a href="/for-you?media_type=tv" class="px-3 py-1.5 rounded-md transition-all {% if media_type == 'tv' %}bg-notion-canvas shadow-sm text-notion-ink border border-notion-hairline{% else %}text-notion-slate hover:text-notion-ink border border-transparent{% endif %}">Series</a>
+        </div>
+        <button type="button"
+                hx-get="/api/for-you?media_type={{ media_type }}&limit=5&refresh=true"
+                hx-target="#for-you-results-target"
+                hx-swap="outerHTML"
+                hx-indicator="#for-you-loading"
+                class="px-4 py-2 rounded-lg border border-notion-hairlineStrong text-sm font-medium hover:bg-notion-surface inline-flex items-center gap-2">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh picks
+            <span id="for-you-loading" class="htmx-indicator w-3.5 h-3.5 rounded-full border-2 border-notion-primary border-t-transparent animate-spin" aria-hidden="true"></span>
+        </button>
+    </div>
+
+    <div class="mt-6 max-w-[880px]">
+        {% include "components/for_you_results.html" with context %}
+    </div>
+</div>
+{% endblock %}

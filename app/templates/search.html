@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}CineMatch - Search{% endblock %}
+
+{% block content %}
+<div class="cm-stage-browse">
+    <p class="cm-eyebrow">Search <span class="dot">·</span> <span>local library + TMDB</span></p>
+    <h1 class="cm-h1">Find a Title, log a Rating</h1>
+    <p class="cm-lede">Every Rating sharpens your Taste Dossier. Search anything, rate it in seconds.</p>
+
+    <div class="cm-bar mt-6 max-w-[880px]">
+        <i data-lucide="search" style="width:18px;height:18px;" class="text-notion-stone shrink-0"></i>
+        <input type="text" id="search-input" name="q"
+               class="focus:outline-none focus:ring-0"
+               placeholder="Try Oppenheimer, Succession, Whiplash…"
+               autocomplete="off" aria-label="Search titles"
+               hx-get="/api/search" hx-trigger="keyup changed delay:400ms, search"
+               hx-sync="this:replace"
+               hx-target="#search-results-target" hx-indicator="#search-loading">
+        <span id="search-loading" class="htmx-indicator pr-2" aria-hidden="true">
+            <span class="block w-4 h-4 rounded-full border-2 border-notion-primary border-t-transparent animate-spin"></span>
+        </span>
+    </div>
+
+    <div id="search-results-target" class="mt-6">
+        {% include "components/search_results.html" with context %}
+    </div>
+</div>
+{% endblock %}

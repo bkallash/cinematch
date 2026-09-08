@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CineMatch - AI Movie & Series Recommendations{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/cinematch.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        notion: {
+                            primary: '#5645d4',
+                            primaryPressed: '#4534b3',
+                            primaryDeep: '#3a2a99',
+                            navy: '#0a1530',
+                            link: '#0075de',
+                            linkPressed: '#005bab',
+                            orange: '#dd5b00',
+                            orangeDeep: '#793400',
+                            pink: '#ff64c8',
+                            pinkDeep: '#a02e6d',
+                            purple: '#7b3ff2',
+                            purple300: '#d6b6f6',
+                            purple800: '#391c57',
+                            teal: '#2a9d99',
+                            green: '#1aae39',
+                            yellow: '#f5d75e',
+                            peach: '#ffe8d4',
+                            rose: '#fde0ec',
+                            mint: '#d9f3e1',
+                            lavender: '#e6e0f5',
+                            sky: '#dcecfa',
+                            paleYellow: '#fef7d6',
+                            yellowBold: '#f9e79f',
+                            cream: '#f8f5e8',
+                            grayTint: '#f0eeec',
+                            canvas: '#ffffff',
+                            surface: '#f6f5f4',
+                            surfaceSoft: '#fafaf9',
+                            hairline: '#e5e3df',
+                            hairlineSoft: '#ede9e4',
+                            hairlineStrong: '#c8c4be',
+                            inkDeep: '#000000',
+                            ink: '#1a1a1a',
+                            charcoal: '#37352f',
+                            slate: '#5d5b54',
+                            steel: '#787671',
+                            stone: '#a4a097',
+                            muted: '#bbb8b1',
+                            onDark: '#ffffff',
+                            success: '#1aae39',
+                            warning: '#dd5b00',
+                            error: '#e03131'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'system-ui', "'Segoe UI'", 'Helvetica', 'sans-serif'],
+                        mono: ['"IBM Plex Mono"', 'ui-monospace', 'Menlo', 'monospace']
+                    },
+                    boxShadow: {
+                        'notion-card': 'rgba(15, 15, 15, 0.08) 0px 4px 12px 0px',
+                        'notion-modal': 'rgba(15, 15, 15, 0.16) 0px 16px 48px -8px'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f6f5f4; }
+        ::-webkit-scrollbar-thumb { background: #e5e3df; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c8c4be; }
+        .notion-input:focus { outline: none; border-color: #5645d4 !important; box-shadow: 0 0 0 1px #5645d4; }
+    </style>
+</head>
+<body class="bg-notion-canvas text-notion-ink min-h-screen flex flex-col font-sans selection:bg-notion-lavender selection:text-notion-purple800">
+
+    <!-- Slim booth bar: mark left, sections center, timecode counts right -->
+    <header class="sticky top-0 z-40 bg-notion-canvas/95 backdrop-blur border-b border-notion-hairline">
+        <div class="max-w-[1120px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+            <a href="/" class="flex items-center gap-2 shrink-0" aria-label="CineMatch home">
+                <span class="w-7 h-7 rounded-lg bg-notion-ink flex items-center justify-center">
+                    <i data-lucide="clapperboard" style="width:15px;height:15px;" class="text-white"></i>
+                </span>
+                <span class="font-semibold text-[15px] tracking-tight">CineMatch</span>
+            </a>
+
+            <nav class="flex items-center gap-1 text-sm" aria-label="Sections">
+                <a href="/" class="px-3 py-1.5 rounded-lg font-medium {% if active_tab == 'chat' %}bg-notion-surface text-notion-ink{% else %}text-notion-slate hover:text-notion-ink hover:bg-notion-surfaceSoft{% endif %}">Assistant</a>
+                <a href="/for-you" class="px-3 py-1.5 rounded-lg font-medium {% if active_tab == 'for-you' %}bg-notion-surface text-notion-ink{% else %}text-notion-slate hover:text-notion-ink hover:bg-notion-surfaceSoft{% endif %}">For You</a>
+                <a href="/deck" class="px-3 py-1.5 rounded-lg font-medium {% if active_tab == 'deck' %}bg-notion-surface text-notion-ink{% else %}text-notion-slate hover:text-notion-ink hover:bg-notion-surfaceSoft{% endif %}">Deck</a>
+                <a href="/search" class="hidden sm:inline px-3 py-1.5 rounded-lg font-medium {% if active_tab == 'search' %}bg-notion-surface text-notion-ink{% else %}text-notion-slate hover:text-notion-ink hover:bg-notion-surfaceSoft{% endif %}">Search</a>
+                <a href="/library" class="px-3 py-1.5 rounded-lg font-medium {% if active_tab == 'library' %}bg-notion-surface text-notion-ink{% else %}text-notion-slate hover:text-notion-ink hover:bg-notion-surfaceSoft{% endif %}">Library</a>
+            </nav>
+
+            <div id="nav-stats" hx-get="/api/stats" hx-trigger="load, ratingUpdated from:body" class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-wider text-notion-steel shrink-0" aria-live="polite">
+                <span class="flex items-center gap-1.5"><i data-lucide="star" style="width:13px;height:13px;" class="text-notion-primary"></i><strong id="nav-ratings-count" class="text-notion-ink font-medium">{{ ratings_count or 0 }}</strong> rated</span>
+                <span class="text-notion-hairlineStrong" aria-hidden="true">·</span>
+                <span class="flex items-center gap-1.5"><i data-lucide="bookmark" style="width:13px;height:13px;" class="text-notion-purple"></i><strong id="nav-watchlist-count" class="text-notion-ink font-medium">{{ watchlist_count or 0 }}</strong> saved</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-[1120px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Rating modal: same film-strip instrument as the Deck -->
+    <div x-data="globalRatingModal()"
+         @open-rating-modal.window="openModal($event.detail)"
+         x-show="isOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-notion-inkDeep/40"
+         x-transition:enter="ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+
+        <div class="bg-notion-canvas border border-notion-hairline rounded-xl max-w-lg w-full p-6 shadow-notion-modal relative"
+             @click.away="closeModal()" role="dialog" aria-modal="true" aria-label="Rate this title">
+            <button @click="closeModal()" aria-label="Close" class="absolute top-4 right-4 text-notion-steel hover:text-notion-ink p-1.5 rounded-md hover:bg-notion-surface">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="flex items-start gap-4 mb-5">
+                <img :src="titleData.poster_url || '/static/images/placeholder_poster.svg'" alt="" onerror="this.onerror=null;this.src='/static/images/placeholder_poster.svg'"
+                     class="w-16 h-24 object-cover rounded-lg border border-notion-hairline shrink-0 bg-notion-surface">
+                <div class="pr-6 min-w-0">
+                    <h3 class="font-semibold text-[18px] leading-snug" x-text="titleData.title"></h3>
+                    <p class="cm-meta mt-1"><span x-text="titleData.release_year"></span> · <span x-text="titleData.media_type"></span><span x-show="titleData.director"> · <span x-text="titleData.director"></span></span></p>
+                </div>
+            </div>
+
+            <p class="cm-strip-caption mb-2">Your Rating <span x-show="score > 0">· <strong x-text="score + '/6 · ' + getScoreLabel(score)"></strong></span><span x-show="score === 0">· pick a frame</span></p>
+            <div class="cm-strip cm-strip-light mb-4">
+                <div class="cm-strip-sprockets" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="cm-strip-frames" role="group" aria-label="Rating, 1 hated to 6 masterpiece">
+                    <template x-for="val in [1, 2, 3, 4, 5, 6]" :key="val">
+                        <button type="button" @click="setScore(val)" :aria-pressed="score === val" class="cm-frame">
+                            <span class="n" x-text="'0' + val"></span>
+                            <span class="l" x-text="getScoreLabel(val)"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="mb-4" x-show="score > 0">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="cm-strip-caption"><span x-show="score >= 4">What worked</span><span x-show="score <= 3">What didn't</span></p>
+                    <span class="text-[11px] text-notion-stone">Optional Aspect Tags</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="tag in activeTagsList" :key="tag">
+                        <button type="button" @click="toggleTag(tag)"
+                                :class="selectedTags.includes(tag) ? (score >= 4 ? 'bg-notion-mint text-notion-green border-notion-green/40' : 'bg-notion-rose text-notion-pinkDeep border-notion-pink/50') : 'bg-notion-canvas text-notion-slate border-notion-hairline hover:border-notion-hairlineStrong'"
+                                class="px-2.5 py-1 rounded-md text-xs font-semibold border">
+                            <span x-text="tag"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="mb-5" x-show="score > 0">
+                <label class="cm-strip-caption block mb-1.5" :for="'cm-note'">Micro-note · one sentence</label>
+                <input id="cm-note" type="text" x-model="note"
+                       placeholder="What will you want to remember?"
+                       class="notion-input w-full bg-notion-canvas border border-notion-hairlineStrong rounded-lg px-3.5 py-2.5 text-[15px] placeholder-notion-muted">
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-notion-hairlineSoft">
+                <button type="button" @click="closeModal()" class="px-4 py-2 text-sm font-medium hover:bg-notion-surface rounded-lg">Cancel</button>
+                <button type="button" @click="submitRating()" :disabled="score === 0 || isSubmitting"
+                        class="px-4 py-2 bg-notion-primary hover:bg-notion-primaryPressed disabled:bg-notion-hairline disabled:text-notion-muted text-white font-medium rounded-lg text-sm">
+                    <span x-text="isSubmitting ? 'Saving…' : 'Save Rating'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function globalRatingModal() {
+            return {
+                isOpen: false,
+                isSubmitting: false,
+                titleData: {},
+                score: 0,
+                selectedTags: [],
+                note: '',
+                positiveTags: ['Visuals', 'Pacing', 'Ending', 'Acting', 'Soundtrack', 'Dialogue', 'Plot', 'Atmosphere', 'Characters', 'Humor', 'Worldbuilding', 'Emotion'],
+                negativeTags: ['Pacing', 'Ending', 'Dialogue', 'Plot Holes', 'Cliche', 'Boring', 'Overrated', 'Characters', 'Visuals'],
+                get activeTagsList() { return this.score >= 4 ? this.positiveTags : this.negativeTags; },
+                openModal(detail) {
+                    this.titleData = detail;
+                    this.score = detail.current_score || 0;
+                    this.selectedTags = detail.current_tags ? [...detail.current_tags] : [];
+                    this.note = detail.current_note || '';
+                    this.isOpen = true;
+                    this.$nextTick(() => { lucide.createIcons(); });
+                },
+                closeModal() { this.isOpen = false; },
+                setScore(val) {
+                    this.score = val;
+                    const allowed = this.activeTagsList;
+                    this.selectedTags = this.selectedTags.filter(t => allowed.includes(t));
+                },
+                toggleTag(tag) {
+                    this.selectedTags = this.selectedTags.includes(tag)
+                        ? this.selectedTags.filter(t => t !== tag) : [...this.selectedTags, tag];
+                },
+                getScoreLabel(val) {
+                    return { 1: 'Hated', 2: 'Disliked', 3: 'Mediocre', 4: 'Good', 5: 'Great', 6: 'Masterpiece' }[val] || '';
+                },
+                getScoreButtonClass(val) {
+                    if (this.score === val) return val >= 4 ? 'bg-notion-primary text-white border-notion-primary' : 'bg-notion-inkDeep text-white border-notion-inkDeep';
+                    return 'bg-notion-canvas border-notion-hairline text-notion-slate hover:border-notion-hairlineStrong hover:text-notion-ink';
+                },
+                async submitRating() {
+                    if (!this.titleData.id || this.score === 0) return;
+                    this.isSubmitting = true;
+                    try {
+                        const res = await fetch('/api/ratings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title_id: this.titleData.id, score: this.score, aspect_tags: this.selectedTags, notes: this.note })
+                        });
+                        if (res.ok) {
+                            this.closeModal();
+                            document.body.dispatchEvent(new CustomEvent('ratingUpdated', { detail: { titleId: this.titleData.id, score: this.score } }));
+                        }
+                    } catch (err) { console.error('Failed to submit rating:', err); }
+                    finally { this.isSubmitting = false; }
+                }
+            };
+        }
+        document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });
+        document.body.addEventListener('htmx:afterSwap', () => { lucide.createIcons(); });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

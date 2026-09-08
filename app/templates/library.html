@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}CineMatch - Library{% endblock %}
+
+{% block content %}
+<div class="cm-stage-browse">
+    <p class="cm-eyebrow">Library <span class="dot">·</span> <span><strong>{{ ratings | length }}</strong> rated <span class="dot">·</span> <strong>{{ watchlist | length }}</strong> saved</span></p>
+    <h1 class="cm-h1">Your shelf</h1>
+    <p class="cm-lede">Everything you've Rated, everything you've Saved, and the Taste Dossier they produce.</p>
+
+    <div class="flex items-center gap-1.5 mt-5" role="tablist" aria-label="Library sections">
+        <a href="/library?tab=ratings" role="tab" aria-selected="{% if current_tab == 'ratings' %}true{% else %}false{% endif %}"
+           class="px-4 py-1.5 rounded-full text-sm font-medium border {% if current_tab == 'ratings' %}bg-notion-ink text-white border-notion-ink{% else %}text-notion-slate border-notion-hairline hover:text-notion-ink hover:border-notion-hairlineStrong{% endif %}">Rated</a>
+        <a href="/library?tab=watchlist" role="tab" aria-selected="{% if current_tab == 'watchlist' %}true{% else %}false{% endif %}"
+           class="px-4 py-1.5 rounded-full text-sm font-medium border {% if current_tab == 'watchlist' %}bg-notion-ink text-white border-notion-ink{% else %}text-notion-slate border-notion-hairline hover:text-notion-ink hover:border-notion-hairlineStrong{% endif %}">Watchlist</a>
+        <a href="/library?tab=dossier" role="tab" aria-selected="{% if current_tab == 'dossier' %}true{% else %}false{% endif %}"
+           class="px-4 py-1.5 rounded-full text-sm font-medium border {% if current_tab == 'dossier' %}bg-notion-ink text-white border-notion-ink{% else %}text-notion-slate border-notion-hairline hover:text-notion-ink hover:border-notion-hairlineStrong{% endif %}">Dossier</a>
+    </div>
+
+    {% if current_tab == 'ratings' %}
+    <div class="mt-6">
+        {% if not ratings %}
+        <div class="cm-card p-10 text-center max-w-[640px] mx-auto">
+            <p class="cm-eyebrow justify-center">Empty shelf</p>
+            <h3 class="cm-h2 mt-2">No Ratings yet</h3>
+            <p class="text-sm text-notion-slate mt-2">Rate three Titles and your Dossier starts writing itself.</p>
+            <a href="/deck" class="inline-flex mt-5 px-4 py-2 rounded-lg bg-notion-primary hover:bg-notion-primaryPressed text-white font-medium text-sm">Open the Deck</a>
+        </div>
+        {% else %}
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {% for r in ratings %}
+            <article class="cm-card flex flex-col group">
+                <div class="cm-poster relative aspect-[2/3] overflow-hidden border-b border-notion-hairline">
+                    <img src="{{ r.poster_path | poster_url }}" alt="Poster for {{ r.title }}" loading="lazy" onerror="this.onerror=null;this.src='/static/images/placeholder_poster.svg'" class="w-full h-full object-cover">
+                    <span class="absolute top-2 right-2 px-2 py-1 rounded-md {% if r.score >= 5 %}bg-notion-primary text-white{% elif r.score == 4 %}bg-notion-canvas/95 border border-notion-hairline text-notion-green{% elif r.score == 3 %}bg-notion-canvas/95 border border-notion-hairline text-notion-slate{% else %}bg-notion-rose text-notion-pinkDeep{% endif %} font-mono text-[11px]">{{ r.score }}/6</span>
+                </div>
+                <div class="p-3.5 flex flex-col flex-1">
+                    <h4 class="font-semibold text-[14px] leading-snug line-clamp-1" title="{{ r.title }}">{{ r.title }}</h4>
+                    <p class="cm-meta mt-1">{{ r.release_year or '—' }} · {{ r.media_type }}</p>
+                    {% if r.aspect_tags %}
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        {% for tag in r.aspect_tags[:3] %}
+                        <span class="cm-tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if r.notes %}
+                    <p class="text-[13px] text-notion-slate italic line-clamp-1 mt-2">“{{ r.notes }}”</p>
+                    {% endif %}
+                    <div class="flex items-center gap-3 pt-2.5 mt-auto">
+                        <button type="button"
+                                @click="$dispatch('open-rating-modal', { id: {{ r.title_id }}, title: '{{ r.title | replace("'", "\\'") }}', release_year: '{{ r.release_year }}', media_type: '{{ r.media_type }}', poster_url: '{{ r.poster_path | poster_url }}', current_score: {{ r.score }}, current_tags: {{ r.aspect_tags | tojson if r.aspect_tags else '[]' }}, current_note: '{{ r.notes | replace("'", "\\'") if r.notes else '' }}' })"
+                                class="text-[13px] text-notion-link font-medium hover:underline">Edit</button>
+                        <button type="button" hx-delete="/api/ratings/{{ r.id }}" hx-confirm="Remove this Rating?" hx-target="closest article" hx-swap="outerHTML swap:300ms"
+                                class="text-[13px] text-notion-steel hover:text-notion-error">Remove</button>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if current_tab == 'watchlist' %}
+    <div class="mt-6">
+        {% if not watchlist %}
+        <div class="cm-card p-10 text-center max-w-[640px] mx-auto">
+            <p class="cm-eyebrow justify-center">Nothing saved</p>
+            <h3 class="cm-h2 mt-2">Your Watchlist is empty</h3>
+            <p class="text-sm text-notion-slate mt-2">Save Titles from the Deck, Search, or any Recommendation.</p>
+            <a href="/deck" class="inline-flex mt-5 px-4 py-2 rounded-lg bg-notion-primary hover:bg-notion-primaryPressed text-white font-medium text-sm">Browse the Deck</a>
+        </div>
+        {% else %}
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {% for item in watchlist %}
+            <article class="cm-card flex flex-col group">
+                <div class="cm-poster relative aspect-[2/3] overflow-hidden border-b border-notion-hairline">
+                    <img src="{{ item.poster_path | poster_url }}" alt="Poster for {{ item.title }}" loading="lazy" onerror="this.onerror=null;this.src='/static/images/placeholder_poster.svg'" class="w-full h-full object-cover">
+                    <span class="cm-meta absolute top-2 left-2 bg-notion-canvas/95 border border-notion-hairline rounded-md px-1.5 py-1">{{ item.media_type }}</span>
+                </div>
+                <div class="p-3.5 flex flex-col flex-1">
+                    <h4 class="font-semibold text-[14px] leading-snug line-clamp-1" title="{{ item.title }}">{{ item.title }}</h4>
+                    <p class="cm-meta mt-1">{{ item.release_year or '—' }}</p>
+                    <div class="flex items-center gap-1.5 pt-3 mt-auto">
+                        <button type="button"
+                                @click="$dispatch('open-rating-modal', { id: {{ item.title_id }}, title: '{{ item.title | replace("'", "\\'") }}', release_year: '{{ item.release_year }}', media_type: '{{ item.media_type }}', poster_url: '{{ item.poster_path | poster_url }}' })"
+                                class="flex-1 py-2 rounded-lg bg-notion-primary hover:bg-notion-primaryPressed text-white text-[13px] font-medium">Rate</button>
+                        <button type="button" hx-delete="/api/watchlist/{{ item.id }}" hx-confirm="Remove from Watchlist?" hx-target="closest article" hx-swap="outerHTML swap:300ms" aria-label="Remove {{ item.title }}"
+                                class="p-2 rounded-lg border border-notion-hairline text-notion-steel hover:text-notion-error">✕</button>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if current_tab == 'dossier' %}
+    <div class="mt-6 max-w-[880px]">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <h2 class="cm-h2">Taste Dossier</h2>
+                <p class="cm-meta mt-1">Synthesized from {{ dossier.ratings_count_at_synthesis }} Ratings</p>
+            </div>
+            <button type="button" hx-post="/api/dossier/regenerate" hx-target="#dossier-refresh-target" hx-swap="innerHTML" hx-indicator="#dossier-spinner"
+                    class="px-4 py-2 rounded-lg border border-notion-hairlineStrong text-sm font-medium hover:bg-notion-surface flex items-center gap-2">
+                <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Re-synthesize
+                <span id="dossier-spinner" class="htmx-indicator w-3.5 h-3.5 rounded-full border-2 border-notion-primary border-t-transparent animate-spin" aria-hidden="true"></span>
+            </button>
+        </div>
+
+        <div id="dossier-refresh-target" class="mt-4">
+            <div class="cm-card p-5 text-[15px] leading-relaxed text-notion-charcoal">
+                {{ dossier.full_summary or 'Rate at least 3 Titles and your Dossier will appear here.' }}
+            </div>
+            <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                <div class="rounded-xl bg-notion-mint p-5">
+                    <p class="cm-eyebrow" style="color:#1aae39;">Loves</p>
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        {% for item in dossier.core_loves %}
+                        <span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{{ item }}</span>
+                        {% else %}<span class="text-sm italic opacity-60">Rate more Titles.</span>{% endfor %}
+                    </div>
+                </div>
+                <div class="rounded-xl bg-notion-rose p-5">
+                    <p class="cm-eyebrow" style="color:#a02e6d;">Deal-breakers</p>
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        {% for item in dossier.deal_breakers %}
+                        <span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{{ item }}</span>
+                        {% else %}<span class="text-sm italic opacity-60">Rate something you disliked.</span>{% endfor %}
+                    </div>
+                </div>
+                <div class="rounded-xl bg-notion-sky p-5">
+                    <p class="cm-eyebrow" style="color:#0075de;">Atmosphere</p>
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        {% for item in dossier.atmospheric_preferences %}
+                        <span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{{ item }}</span>
+                        {% else %}<span class="text-sm italic opacity-60">Nothing yet.</span>{% endfor %}
+                    </div>
+                </div>
+                <div class="rounded-xl bg-notion-lavender p-5">
+                    <p class="cm-eyebrow" style="color:#391c57;">Creators</p>
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        {% for item in dossier.creator_affinities %}
+                        <span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{{ item }}</span>
+                        {% else %}<span class="text-sm italic opacity-60">Directors and actors land here.</span>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+<!-- Conversation turn: user Vibe Query or assistant Recommendation -->
+{% if role == 'user' %}
+<div class="flex justify-end cm-msg-in">
+    <div class="max-w-xl bg-notion-ink text-white px-4 py-3 rounded-2xl rounded-tr-sm text-[15px] leading-relaxed shadow-sm">
+        <p class="font-mono text-[10px] tracking-wider uppercase text-notion-muted mb-1 flex items-center gap-1.5">
+            <i data-lucide="sparkles" style="width:11px;height:11px;" class="text-notion-yellowBold"></i> Vibe Prompt
+        </p>
+        {{ content }}
+    </div>
+</div>
+{% else %}
+<div class="cm-msg-in space-y-3">
+    <div class="flex items-center justify-between">
+        <p class="cm-eyebrow"><i data-lucide="clapperboard" style="width:13px;height:13px;" class="text-notion-primary"></i> Concierge Picks</p>
+    </div>
+    <div class="cm-card p-5 text-[15px] leading-relaxed text-notion-charcoal bg-notion-surfaceSoft/60 border-notion-hairline">
+        {{ content | safe }}
+    </div>
+
+    {% if recommendations and recommendations | length > 0 %}
+    <div class="mt-3 space-y-3">
+        {% for item in recommendations %}
+        <article class="cm-card p-4 flex gap-4 hover:border-notion-hairlineStrong transition-colors">
+            <img src="{{ item.poster_path | poster_url }}" alt="Poster for {{ item.title }}" onerror="this.onerror=null;this.src='/static/images/placeholder_poster.svg'"
+                 class="cm-poster w-16 h-24 object-cover rounded-lg border border-notion-hairline shrink-0">
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h4 class="font-semibold text-[15px] truncate text-notion-ink" title="{{ item.title }}">{{ item.title }}</h4>
+                    <div class="flex items-center gap-2 shrink-0">
+                        {% set score = item.imdb_rating or item.vote_average %}
+                        {% if score and score > 0 %}
+                        <a href="{% if item.imdb_id %}https://www.imdb.com/title/{{ item.imdb_id }}/{% else %}https://www.imdb.com/find/?q={{ item.title | urlencode }}{% endif %}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="cm-imdb-pill group/imdb"
+                           title="View {{ item.title }} on IMDb (opens in new tab)">
+                            <span class="cm-imdb-logo">IMDb</span>
+                            <span class="cm-imdb-score">{{ "%.1f"|format(score) }}</span>
+                            <span class="cm-imdb-ten">/10</span>
+                            <i data-lucide="external-link" style="width:10px;height:10px;" class="text-notion-stone group-hover/imdb:text-notion-ink transition-colors"></i>
+                        </a>
+                        {% endif %}
+                        <span class="cm-meta">{{ item.release_year }} · {{ item.media_type }}{% if item.is_on_watchlist %} · saved{% endif %}</span>
+                    </div>
+                </div>
+                {% if item.genres %}
+                <div class="flex flex-wrap gap-1 mt-1.5">
+                    {% for g in item.genres[:3] %}
+                    <span class="cm-tag">{{ g }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <p class="text-sm text-notion-slate leading-relaxed mt-2 border-l-2 border-notion-primary/60 pl-3 italic">“{{ item.reason }}”</p>
+                <div class="flex items-center gap-2 mt-3">
+                    <button type="button"
+                            @click="$dispatch('open-rating-modal', { id: {{ item.title_id }}, title: '{{ item.title | replace("'", "\\'") }}', release_year: '{{ item.release_year }}', media_type: '{{ item.media_type }}', poster_url: '{{ item.poster_path | poster_url }}' })"
+                            class="px-3.5 py-2 rounded-lg bg-notion-primary hover:bg-notion-primaryPressed text-white text-[13px] font-medium flex items-center gap-1.5">
+                        <i data-lucide="star" style="width:14px;height:14px;"></i> Rate
+                    </button>
+                    <button type="button" hx-post="/api/watchlist/toggle/{{ item.title_id }}" hx-swap="outerHTML"
+                            aria-label="{% if item.is_on_watchlist %}Saved to Watchlist{% else %}Save to Watchlist{% endif %}"
+                            title="{% if item.is_on_watchlist %}Saved to Watchlist{% else %}Save to Watchlist{% endif %}"
+                            class="p-2 rounded-lg border border-notion-hairline text-notion-slate hover:bg-notion-surface">
+                        <i data-lucide="bookmark" style="width:15px;height:15px;" class="{% if item.is_on_watchlist %}fill-notion-primary text-notion-primary{% endif %}"></i>
+                    </button>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}

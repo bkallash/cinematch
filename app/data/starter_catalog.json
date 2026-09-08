@@ -1,0 +1,3621 @@
+[
+  {
+    "tmdb_id": 157336,
+    "media_type": "movie",
+    "title": "Interstellar",
+    "release_year": 2014,
+    "genres": [
+      "Adventure",
+      "Drama",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Christopher Nolan",
+    "cast_top": [
+      "Matthew McConaughey",
+      "Anne Hathaway",
+      "Jessica Chastain",
+      "Michael Caine"
+    ],
+    "poster_path": "/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg",
+    "vote_average": 8.4,
+    "vote_count": 34000,
+    "popularity": 180.0,
+    "overview": "The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage."
+  },
+  {
+    "tmdb_id": 27205,
+    "media_type": "movie",
+    "title": "Inception",
+    "release_year": 2010,
+    "genres": [
+      "Action",
+      "Science Fiction",
+      "Adventure"
+    ],
+    "director_or_creator": "Christopher Nolan",
+    "cast_top": [
+      "Leonardo DiCaprio",
+      "Joseph Gordon-Levitt",
+      "Elliot Page",
+      "Tom Hardy"
+    ],
+    "poster_path": "/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg",
+    "vote_average": 8.4,
+    "vote_count": 36000,
+    "popularity": 150.0,
+    "overview": "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: inception."
+  },
+  {
+    "tmdb_id": 603,
+    "media_type": "movie",
+    "title": "The Matrix",
+    "release_year": 1999,
+    "genres": [
+      "Action",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Lana Wachowski",
+    "cast_top": [
+      "Keanu Reeves",
+      "Laurence Fishburne",
+      "Carrie-Anne Moss",
+      "Hugo Weaving"
+    ],
+    "poster_path": "/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg",
+    "vote_average": 8.2,
+    "vote_count": 25000,
+    "popularity": 110.0,
+    "overview": "Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth."
+  },
+  {
+    "tmdb_id": 335984,
+    "media_type": "movie",
+    "title": "Blade Runner 2049",
+    "release_year": 2017,
+    "genres": [
+      "Science Fiction",
+      "Drama"
+    ],
+    "director_or_creator": "Denis Villeneuve",
+    "cast_top": [
+      "Ryan Gosling",
+      "Harrison Ford",
+      "Ana de Armas",
+      "Sylvia Hoeks"
+    ],
+    "poster_path": "/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
+    "vote_average": 7.6,
+    "vote_count": 13000,
+    "popularity": 95.0,
+    "overview": "Thirty years after the events of the first film, a new blade runner, LAPD Officer K, unearths a long-buried secret that has the potential to plunge what's left of society into chaos."
+  },
+  {
+    "tmdb_id": 438631,
+    "media_type": "movie",
+    "title": "Dune",
+    "release_year": 2021,
+    "genres": [
+      "Science Fiction",
+      "Adventure"
+    ],
+    "director_or_creator": "Denis Villeneuve",
+    "cast_top": [
+      "Timothée Chalamet",
+      "Rebecca Ferguson",
+      "Oscar Isaac",
+      "Zendaya"
+    ],
+    "poster_path": "/v1tRXZ4JtD2Iv6fjkPvT4GiwslV.jpg",
+    "vote_average": 7.8,
+    "vote_count": 11500,
+    "popularity": 140.0,
+    "overview": "Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and his people."
+  },
+  {
+    "tmdb_id": 693134,
+    "media_type": "movie",
+    "title": "Dune: Part Two",
+    "release_year": 2024,
+    "genres": [
+      "Science Fiction",
+      "Adventure"
+    ],
+    "director_or_creator": "Denis Villeneuve",
+    "cast_top": [
+      "Timothée Chalamet",
+      "Zendaya",
+      "Rebecca Ferguson",
+      "Javier Bardem"
+    ],
+    "poster_path": "/6izwz7rsy95ARzTR3poZ8H6c5pp.jpg",
+    "vote_average": 8.2,
+    "vote_count": 5500,
+    "popularity": 190.0,
+    "overview": "Follow the mythic journey of Paul Atreides as he unites with Chani and the Fremen while on a path of revenge against the conspirators who destroyed his family."
+  },
+  {
+    "tmdb_id": 329865,
+    "media_type": "movie",
+    "title": "Arrival",
+    "release_year": 2016,
+    "genres": [
+      "Drama",
+      "Science Fiction",
+      "Mystery"
+    ],
+    "director_or_creator": "Denis Villeneuve",
+    "cast_top": [
+      "Amy Adams",
+      "Jeremy Renner",
+      "Forest Whitaker",
+      "Michael Stuhlbarg"
+    ],
+    "poster_path": "/pEzNVQfdzYDzVK0XqxERIw2x2se.jpg",
+    "vote_average": 7.6,
+    "vote_count": 17000,
+    "popularity": 75.0,
+    "overview": "Taking place after alien crafts land around the world, an expert linguist is recruited by the military to determine whether they come in peace or are a threat."
+  },
+  {
+    "tmdb_id": 313369,
+    "media_type": "movie",
+    "title": "La La Land",
+    "release_year": 2016,
+    "genres": [
+      "Comedy",
+      "Drama",
+      "Romance",
+      "Music"
+    ],
+    "director_or_creator": "Damien Chazelle",
+    "cast_top": [
+      "Ryan Gosling",
+      "Emma Stone",
+      "John Legend",
+      "Rosemarie DeWitt"
+    ],
+    "poster_path": "/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",
+    "vote_average": 7.9,
+    "vote_count": 16000,
+    "popularity": 85.0,
+    "overview": "Mia, an aspiring actress, and Sebastian, a dedicated jazz musician, are struggling to make ends meet in a city known for crushing hopes and breaking hearts. Set in modern-day Los Angeles, this original musical about everyday life explores the joy and pain of pursuing your dreams."
+  },
+  {
+    "tmdb_id": 38,
+    "media_type": "movie",
+    "title": "Eternal Sunshine of the Spotless Mind",
+    "release_year": 2004,
+    "genres": [
+      "Science Fiction",
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Michel Gondry",
+    "cast_top": [
+      "Jim Carrey",
+      "Kate Winslet",
+      "Kirsten Dunst",
+      "Mark Ruffalo"
+    ],
+    "poster_path": "/5MwkWH9tYHv3mV9OdYTMR5qreIz.jpg",
+    "vote_average": 8.1,
+    "vote_count": 14500,
+    "popularity": 65.0,
+    "overview": "Joel Barish, heartbroken that his girlfriend Clementine underwent a procedure to erase him from her memory, decides to do the same. However, as he watches his memories of her fade away, he realizes he still loves her, and may be too late to correct his mistake."
+  },
+  {
+    "tmdb_id": 76,
+    "media_type": "movie",
+    "title": "Before Sunrise",
+    "release_year": 1995,
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Richard Linklater",
+    "cast_top": [
+      "Ethan Hawke",
+      "Julie Delpy",
+      "Andrea Eckert",
+      "Hanno Pöschl"
+    ],
+    "poster_path": "/kf1Jb1c2JAOqjuzA3H4oDM263uB.jpg",
+    "vote_average": 8.0,
+    "vote_count": 4200,
+    "popularity": 45.0,
+    "overview": "On a train from Budapest to Vienna, Jesse meets Céline, a student returning to Paris. After chatting, Jesse convinces Céline to get off the train with him in Vienna so they can spend the night walking through the city talking about love and life before he catches a flight home."
+  },
+  {
+    "tmdb_id": 80,
+    "media_type": "movie",
+    "title": "Before Sunset",
+    "release_year": 2004,
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Richard Linklater",
+    "cast_top": [
+      "Ethan Hawke",
+      "Julie Delpy",
+      "Vernon Dobtcheff",
+      "Louise Lemoine Torrès"
+    ],
+    "poster_path": "/4sW5XH9ZfYXpvFzev00S1IGAEbg.jpg",
+    "vote_average": 7.9,
+    "vote_count": 3400,
+    "popularity": 38.0,
+    "overview": "Nine years after their brief encounter in Vienna, Jesse and Céline meet again in Paris during Jesse's book tour. With only a few hours before Jesse's plane departs, they roam the streets of Paris examining their past choices and lingering chemistry."
+  },
+  {
+    "tmdb_id": 666277,
+    "media_type": "movie",
+    "title": "Past Lives",
+    "release_year": 2023,
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Celine Song",
+    "cast_top": [
+      "Greta Lee",
+      "Teo Yoo",
+      "John Magaro",
+      "Moon Seung-ah"
+    ],
+    "poster_path": "/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg",
+    "vote_average": 7.8,
+    "vote_count": 1800,
+    "popularity": 60.0,
+    "overview": "Nora and Hae Sung, two deeply connected childhood friends, are wrested apart after Nora's family emigrates from South Korea. Two decades later, they are reunited in New York for one fateful week as they confront notions of destiny, love, and the choices that make a life."
+  },
+  {
+    "tmdb_id": 152601,
+    "media_type": "movie",
+    "title": "Her",
+    "release_year": 2013,
+    "genres": [
+      "Romance",
+      "Science Fiction",
+      "Drama"
+    ],
+    "director_or_creator": "Spike Jonze",
+    "cast_top": [
+      "Joaquin Phoenix",
+      "Scarlett Johansson",
+      "Amy Adams",
+      "Rooney Mara"
+    ],
+    "poster_path": "/eCOtqtfvn7mxGl6nfmq4b1exJRc.jpg",
+    "vote_average": 7.9,
+    "vote_count": 13900,
+    "popularity": 55.0,
+    "overview": "In the near future, a lonely writer develops an unlikely relationship with an operating system designed to meet his every need."
+  },
+  {
+    "tmdb_id": 597,
+    "media_type": "movie",
+    "title": "Titanic",
+    "release_year": 1997,
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "James Cameron",
+    "cast_top": [
+      "Leonardo DiCaprio",
+      "Kate Winslet",
+      "Billy Zane",
+      "Kathy Bates"
+    ],
+    "poster_path": "/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg",
+    "vote_average": 7.9,
+    "vote_count": 24800,
+    "popularity": 135.0,
+    "overview": "101-year-old Rose DeWitt Bukater tells the story of her life aboard the Titanic, 84 years later. A young Rose boards the ship with her mother and fiance. Meanwhile, Jack Dawson and Fabrizio De Rossi win third-class tickets aboard the ship."
+  },
+  {
+    "tmdb_id": 4348,
+    "media_type": "movie",
+    "title": "Pride & Prejudice",
+    "release_year": 2005,
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Joe Wright",
+    "cast_top": [
+      "Keira Knightley",
+      "Matthew Macfadyen",
+      "Brenda Blethyn",
+      "Donald Sutherland"
+    ],
+    "poster_path": "/o8UhmEbWPHmTUxP0lMuCoqNkbB3.jpg",
+    "vote_average": 8.1,
+    "vote_count": 8200,
+    "popularity": 62.0,
+    "overview": "Sparks fly when spirited Elizabeth Bennet meets single, rich, and proud Mr. Darcy. But Mr. Darcy reluctantly finds himself falling in love with a woman beneath his class."
+  },
+  {
+    "tmdb_id": 19913,
+    "media_type": "movie",
+    "title": "(500) Days of Summer",
+    "release_year": 2009,
+    "genres": [
+      "Comedy",
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Marc Webb",
+    "cast_top": [
+      "Joseph Gordon-Levitt",
+      "Zooey Deschanel",
+      "Geoffrey Arend",
+      "Chloë Grace Moretz"
+    ],
+    "poster_path": "/qXAuQ9hF30sQRsXf40OfRVl0MJZ.jpg",
+    "vote_average": 7.3,
+    "vote_count": 9800,
+    "popularity": 45.0,
+    "overview": "Tom, greeting-card writer and hopeless romantic, is caught completely off-guard when his girlfriend, Summer, suddenly dumps him. He reflects on their 500 days together to try to figure out where their love affair went sour."
+  },
+  {
+    "tmdb_id": 1585,
+    "media_type": "movie",
+    "title": "It's a Wonderful Life",
+    "release_year": 1946,
+    "genres": [
+      "Drama",
+      "Family",
+      "Fantasy"
+    ],
+    "director_or_creator": "Frank Capra",
+    "cast_top": [
+      "James Stewart",
+      "Donna Reed",
+      "Lionel Barrymore",
+      "Thomas Mitchell"
+    ],
+    "poster_path": "/bSqt9rhDZx1Q7UZ86dBPKdNomp2.jpg",
+    "vote_average": 8.3,
+    "vote_count": 4200,
+    "popularity": 50.0,
+    "overview": "A holiday favourite for generations... George Bailey has spent his entire life giving to the people of Bedford Falls. All that prevents rich skinflint Mr. Potter from taking over the town is George's modest building and loan company. But on Christmas Eve the business's $8,000 is lost and George's troubles begin."
+  },
+  {
+    "tmdb_id": 771,
+    "media_type": "movie",
+    "title": "Home Alone",
+    "release_year": 1990,
+    "genres": [
+      "Comedy",
+      "Family"
+    ],
+    "director_or_creator": "Chris Columbus",
+    "cast_top": [
+      "Macaulay Culkin",
+      "Joe Pesci",
+      "Daniel Stern",
+      "John Heard"
+    ],
+    "poster_path": "/onTSipZ8R3bliBdKfPtsDuHTdlL.jpg",
+    "vote_average": 7.4,
+    "vote_count": 11500,
+    "popularity": 90.0,
+    "overview": "Eight-year-old Kevin McCallister makes the most of the situation after his family unwittingly leaves him behind when they go on Christmas vacation. But when a pair of bungling burglars try to break in, Kevin must defend his home."
+  },
+  {
+    "tmdb_id": 562,
+    "media_type": "movie",
+    "title": "Die Hard",
+    "release_year": 1988,
+    "genres": [
+      "Action",
+      "Thriller"
+    ],
+    "director_or_creator": "John McTiernan",
+    "cast_top": [
+      "Bruce Willis",
+      "Alan Rickman",
+      "Bonnie Bedelia",
+      "Reginald VelJohnson"
+    ],
+    "poster_path": "/7Bjd8kfmDSOzpmhySpEhkUyK2oH.jpg",
+    "vote_average": 7.8,
+    "vote_count": 11000,
+    "popularity": 70.0,
+    "overview": "NYPD cop John McClane's plan to reconcile with his estranged wife is thrown into serious jeopardy when, after he arrives at her office's Christmas Eve party, the building is overtaken by a group of terrorists."
+  },
+  {
+    "tmdb_id": 5255,
+    "media_type": "movie",
+    "title": "The Polar Express",
+    "release_year": 2004,
+    "genres": [
+      "Animation",
+      "Family",
+      "Adventure",
+      "Fantasy"
+    ],
+    "director_or_creator": "Robert Zemeckis",
+    "cast_top": [
+      "Tom Hanks",
+      "Leslie Zemeckis",
+      "Eddie Deezen",
+      "Nona Gaye"
+    ],
+    "poster_path": "/eOoCzH0MqeGr2taUZO4SwG416PF.jpg",
+    "vote_average": 6.7,
+    "vote_count": 6200,
+    "popularity": 58.0,
+    "overview": "When a doubting young boy takes an extraordinary train ride to the North Pole, he embarks on a journey of self-discovery that shows him that the wonder of life never fades for those who believe."
+  },
+  {
+    "tmdb_id": 5825,
+    "media_type": "movie",
+    "title": "National Lampoon's Christmas Vacation",
+    "release_year": 1989,
+    "genres": [
+      "Comedy"
+    ],
+    "director_or_creator": "Jeremiah S. Chechik",
+    "cast_top": [
+      "Chevy Chase",
+      "Beverly D'Angelo",
+      "Juliette Lewis",
+      "Johnny Galecki"
+    ],
+    "poster_path": "/oat42hUw8XzKYUmfy0YLAxYd484.jpg",
+    "vote_average": 7.3,
+    "vote_count": 2700,
+    "popularity": 48.0,
+    "overview": "It's Christmas time and the Griswolds are preparing for a family seasonal celebration, but things never run smoothly for Clark, his wife Ellen and their two kids."
+  },
+  {
+    "tmdb_id": 550,
+    "media_type": "movie",
+    "title": "Fight Club",
+    "release_year": 1999,
+    "genres": [
+      "Drama"
+    ],
+    "director_or_creator": "David Fincher",
+    "cast_top": [
+      "Brad Pitt",
+      "Edward Norton",
+      "Helena Bonham Carter",
+      "Meat Loaf"
+    ],
+    "poster_path": "/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg",
+    "vote_average": 8.4,
+    "vote_count": 29000,
+    "popularity": 110.0,
+    "overview": "A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground 'fight clubs' forming in every town, until an eccentric gets in the way and ignites an out-of-control spiral toward oblivion."
+  },
+  {
+    "tmdb_id": 807,
+    "media_type": "movie",
+    "title": "Se7en",
+    "release_year": 1995,
+    "genres": [
+      "Crime",
+      "Mystery",
+      "Thriller"
+    ],
+    "director_or_creator": "David Fincher",
+    "cast_top": [
+      "Brad Pitt",
+      "Morgan Freeman",
+      "Gwyneth Paltrow",
+      "Kevin Spacey"
+    ],
+    "poster_path": "/191nKfP0ehp3uIvWqgPbFmI4lv9.jpg",
+    "vote_average": 8.4,
+    "vote_count": 20800,
+    "popularity": 92.0,
+    "overview": "Two homicide detectives are on a desperate hunt for a serial killer whose crimes are based on the 'seven deadly sins' in this dark and haunting film that takes viewers from the tortured remains of one victim to the next."
+  },
+  {
+    "tmdb_id": 278,
+    "media_type": "movie",
+    "title": "The Shawshank Redemption",
+    "release_year": 1994,
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Frank Darabont",
+    "cast_top": [
+      "Tim Robbins",
+      "Morgan Freeman",
+      "Bob Gunton",
+      "William Sadler"
+    ],
+    "poster_path": "/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
+    "vote_average": 8.7,
+    "vote_count": 27000,
+    "popularity": 165.0,
+    "overview": "Imprisoned in the 1940s for the double murder of his wife and her lover, upstanding banker Andy Dufresne begins a new life at the Shawshank prison, where he puts his accounting skills to work for an amoral warden."
+  },
+  {
+    "tmdb_id": 238,
+    "media_type": "movie",
+    "title": "The Godfather",
+    "release_year": 1972,
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Francis Ford Coppola",
+    "cast_top": [
+      "Marlon Brando",
+      "Al Pacino",
+      "James Caan",
+      "Robert Duvall"
+    ],
+    "poster_path": "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+    "vote_average": 8.7,
+    "vote_count": 20400,
+    "popularity": 140.0,
+    "overview": "Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family. When organized crime family patriarch, Vito Corleone barely survives an attempt on his life, his youngest son, Michael steps in to take care of the would-be killers."
+  },
+  {
+    "tmdb_id": 680,
+    "media_type": "movie",
+    "title": "Pulp Fiction",
+    "release_year": 1994,
+    "genres": [
+      "Thriller",
+      "Crime"
+    ],
+    "director_or_creator": "Quentin Tarantino",
+    "cast_top": [
+      "John Travolta",
+      "Samuel L. Jackson",
+      "Uma Thurman",
+      "Bruce Willis"
+    ],
+    "poster_path": "/vQWk5YBFWF4bZaofAbv0tShwBvQ.jpg",
+    "vote_average": 8.5,
+    "vote_count": 27500,
+    "popularity": 125.0,
+    "overview": "A burger-loving hit man, his philosophical partner, a drug-addled gangster's moll and a washed-up boxer converge in this sprawling, comedic crime caper. Their adventures unfurl in three stories that ingeniously trip back and forth in time."
+  },
+  {
+    "tmdb_id": 496243,
+    "media_type": "movie",
+    "title": "Parasite",
+    "release_year": 2019,
+    "genres": [
+      "Comedy",
+      "Thriller",
+      "Drama"
+    ],
+    "director_or_creator": "Bong Joon-ho",
+    "cast_top": [
+      "Song Kang-ho",
+      "Lee Sun-kyun",
+      "Cho Yeo-jeong",
+      "Choi Woo-shik"
+    ],
+    "poster_path": "/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+    "vote_average": 8.5,
+    "vote_count": 18000,
+    "popularity": 105.0,
+    "overview": "All unemployed, Ki-taek's family takes peculiar interest in the wealthy and glamorous Parks for their livelihood until they get entangled in an unexpected incident."
+  },
+  {
+    "tmdb_id": 244786,
+    "media_type": "movie",
+    "title": "Whiplash",
+    "release_year": 2014,
+    "genres": [
+      "Drama",
+      "Music"
+    ],
+    "director_or_creator": "Damien Chazelle",
+    "cast_top": [
+      "Miles Teller",
+      "J.K. Simmons",
+      "Paul Reiser",
+      "Melissa Benoist"
+    ],
+    "poster_path": "/7fn624j5lj3xTme2SgiLCeuedmO.jpg",
+    "vote_average": 8.4,
+    "vote_count": 14700,
+    "popularity": 88.0,
+    "overview": "Under the direction of a ruthless instructor, a talented young drummer begins to pursue perfection at any cost, pushing himself to the brink of both his ability and his sanity."
+  },
+  {
+    "tmdb_id": 11324,
+    "media_type": "movie",
+    "title": "Shutter Island",
+    "release_year": 2010,
+    "genres": [
+      "Drama",
+      "Thriller",
+      "Mystery"
+    ],
+    "director_or_creator": "Martin Scorsese",
+    "cast_top": [
+      "Leonardo DiCaprio",
+      "Mark Ruffalo",
+      "Ben Kingsley",
+      "Max von Sydow"
+    ],
+    "poster_path": "/nrmXQ0zcZUL8jFLrakWc90IR8z9.jpg",
+    "vote_average": 8.2,
+    "vote_count": 23500,
+    "popularity": 95.0,
+    "overview": "World War II soldier-turned-U.S. Marshal Teddy Daniels investigates the disappearance of a patient from Boston's Shutter Island Ashecliffe Hospital, uncovering sinister truths about the facility."
+  },
+  {
+    "tmdb_id": 77,
+    "media_type": "movie",
+    "title": "Memento",
+    "release_year": 2000,
+    "genres": [
+      "Mystery",
+      "Thriller"
+    ],
+    "director_or_creator": "Christopher Nolan",
+    "cast_top": [
+      "Guy Pearce",
+      "Carrie-Anne Moss",
+      "Joe Pantoliano",
+      "Mark Boone Junior"
+    ],
+    "poster_path": "/nzlv62aC0octS5AklAiWpXLX9Z0.jpg",
+    "vote_average": 8.2,
+    "vote_count": 14500,
+    "popularity": 55.0,
+    "overview": "Leonard Shelby is tracking down the man who raped and murdered his wife. The difficulty of locating his wife's killer, however, is compounded by the fact that he suffers from a rare, untreatable form of short-term memory loss."
+  },
+  {
+    "tmdb_id": 1422,
+    "media_type": "movie",
+    "title": "The Departed",
+    "release_year": 2006,
+    "genres": [
+      "Drama",
+      "Thriller",
+      "Crime"
+    ],
+    "director_or_creator": "Martin Scorsese",
+    "cast_top": [
+      "Leonardo DiCaprio",
+      "Matt Damon",
+      "Jack Nicholson",
+      "Mark Wahlberg"
+    ],
+    "poster_path": "/nT97ifVT2J1yMQmeq20Qblg61T.jpg",
+    "vote_average": 8.2,
+    "vote_count": 14500,
+    "popularity": 75.0,
+    "overview": "To take down South Boston's Irish Mafia, the police send in one of their own to infiltrate the underworld, not realizing the syndicate has done likewise."
+  },
+  {
+    "tmdb_id": 87101,
+    "media_type": "movie",
+    "title": "Oppenheimer",
+    "release_year": 2023,
+    "genres": [
+      "Drama",
+      "History"
+    ],
+    "director_or_creator": "Christopher Nolan",
+    "cast_top": [
+      "Cillian Murphy",
+      "Emily Blunt",
+      "Matt Damon",
+      "Robert Downey Jr."
+    ],
+    "poster_path": "/oZRVDpNtmHk8M1VYy1aeOWUXgbC.jpg",
+    "vote_average": 8.1,
+    "vote_count": 9200,
+    "popularity": 130.0,
+    "overview": "The story of J. Robert Oppenheimer's role in the development of the atomic bomb during World War II, examining the political, personal, and moral ramifications of his creation."
+  },
+  {
+    "tmdb_id": 155,
+    "media_type": "movie",
+    "title": "The Dark Knight",
+    "release_year": 2008,
+    "genres": [
+      "Drama",
+      "Action",
+      "Crime",
+      "Thriller"
+    ],
+    "director_or_creator": "Christopher Nolan",
+    "cast_top": [
+      "Christian Bale",
+      "Heath Ledger",
+      "Michael Caine",
+      "Gary Oldman"
+    ],
+    "poster_path": "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+    "vote_average": 8.5,
+    "vote_count": 32000,
+    "popularity": 130.0,
+    "overview": "Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations that plague the streets. The partnership proves to be effective, but they soon find themselves prey to a reign of chaos unleashed by a rising criminal mastermind known to the terrified citizens of Gotham as the Joker."
+  },
+  {
+    "tmdb_id": 1396,
+    "media_type": "tv",
+    "title": "Breaking Bad",
+    "release_year": 2008,
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Vince Gilligan",
+    "cast_top": [
+      "Bryan Cranston",
+      "Aaron Paul",
+      "Anna Gunn",
+      "Dean Norris"
+    ],
+    "poster_path": "/anFx9aTOOYqgS3v7x3R84Kz67ly.jpg",
+    "vote_average": 8.9,
+    "vote_count": 14200,
+    "popularity": 220.0,
+    "overview": "Walter White, a New Mexico chemistry teacher diagnosed with terminal lung cancer, teams up with a former student to cook and sell methamphetamine to secure his family's financial future before he dies."
+  },
+  {
+    "tmdb_id": 60059,
+    "media_type": "tv",
+    "title": "Better Call Saul",
+    "release_year": 2015,
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
+    "director_or_creator": "Vince Gilligan, Peter Gould",
+    "cast_top": [
+      "Bob Odenkirk",
+      "Rhea Seehorn",
+      "Jonathan Banks",
+      "Patrick Fabian"
+    ],
+    "poster_path": "/zjg4jpK1Wp2kiRvtt5ND0kznako.jpg",
+    "vote_average": 8.7,
+    "vote_count": 5200,
+    "popularity": 110.0,
+    "overview": "Six years before he begins to represent Albuquerque's most notorious criminal, Jimmy McGill is a small-time attorney hustling to champion his underdog clients and make a name for himself."
+  },
+  {
+    "tmdb_id": 1399,
+    "media_type": "tv",
+    "title": "Game of Thrones",
+    "release_year": 2011,
+    "genres": [
+      "Sci-Fi & Fantasy",
+      "Drama",
+      "Action & Adventure"
+    ],
+    "director_or_creator": "David Benioff, D.B. Weiss",
+    "cast_top": [
+      "Peter Dinklage",
+      "Kit Harington",
+      "Emilia Clarke",
+      "Lena Headey"
+    ],
+    "poster_path": "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+    "vote_average": 8.4,
+    "vote_count": 23500,
+    "popularity": 210.0,
+    "overview": "Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war. All while a very ancient evil awakens in the farthest north."
+  },
+  {
+    "tmdb_id": 87108,
+    "media_type": "tv",
+    "title": "Chernobyl",
+    "release_year": 2019,
+    "genres": [
+      "Drama",
+      "History"
+    ],
+    "director_or_creator": "Craig Mazin",
+    "cast_top": [
+      "Jared Harris",
+      "Stellan Skarsgård",
+      "Emily Watson",
+      "Paul Ritter"
+    ],
+    "poster_path": "/hlLXt2tOPT6RRnjiUmoxyG1LTFi.jpg",
+    "vote_average": 8.7,
+    "vote_count": 6100,
+    "popularity": 85.0,
+    "overview": "The true story of one of the worst man-made catastrophes in history: the catastrophic nuclear accident at Chernobyl. A tale of the brave men and women who sacrificed to save Europe from unimaginable disaster."
+  },
+  {
+    "tmdb_id": 94997,
+    "media_type": "tv",
+    "title": "House of the Dragon",
+    "release_year": 2022,
+    "genres": [
+      "Drama",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Ryan J. Condal, George R.R. Martin",
+    "cast_top": [
+      "Matt Smith",
+      "Emma D'Arcy",
+      "Olivia Cooke",
+      "Rhys Ifans"
+    ],
+    "poster_path": "/7V0Ebks0GgpKvQ7QbLAIdX5dos4.jpg",
+    "vote_average": 8.4,
+    "vote_count": 4800,
+    "popularity": 160.0,
+    "overview": "The Targaryen dynasty is at the absolute apex of its power, with more than 15 dragons under their yoke. Most empires crumble from such heights. In the case of the Targaryens, their slow fall begins when King Viserys breaks with a century of tradition by naming his daughter Rhaenyra heir to the Iron Throne."
+  },
+  {
+    "tmdb_id": 76479,
+    "media_type": "tv",
+    "title": "The Boys",
+    "release_year": 2019,
+    "genres": [
+      "Sci-Fi & Fantasy",
+      "Action & Adventure"
+    ],
+    "director_or_creator": "Eric Kripke",
+    "cast_top": [
+      "Karl Urban",
+      "Jack Quaid",
+      "Antony Starr",
+      "Erin Moriarty"
+    ],
+    "poster_path": "/in1R2dDc421JxsoRWaIIAqVI2KE.jpg",
+    "vote_average": 8.4,
+    "vote_count": 10200,
+    "popularity": 170.0,
+    "overview": "A fun and irreverent take on what happens when superheroes—who are as popular as celebrities, as influential as politicians, and as revered as gods—abuse their superpowers rather than use them for good. Intent on stopping the corrupt superheroes, a group of vigilantes known informally as 'The Boys' embark on a heroic quest to expose the truth."
+  },
+  {
+    "tmdb_id": 66732,
+    "media_type": "tv",
+    "title": "Stranger Things",
+    "release_year": 2016,
+    "genres": [
+      "Sci-Fi & Fantasy",
+      "Drama",
+      "Mystery"
+    ],
+    "director_or_creator": "The Duffer Brothers",
+    "cast_top": [
+      "Millie Bobby Brown",
+      "Finn Wolfhard",
+      "Winona Ryder",
+      "David Harbour"
+    ],
+    "poster_path": "/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg",
+    "vote_average": 8.6,
+    "vote_count": 17000,
+    "popularity": 195.0,
+    "overview": "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl."
+  },
+  {
+    "tmdb_id": 119051,
+    "media_type": "tv",
+    "title": "Wednesday",
+    "release_year": 2022,
+    "genres": [
+      "Sci-Fi & Fantasy",
+      "Mystery",
+      "Comedy"
+    ],
+    "director_or_creator": "Alfred Gough, Miles Millar",
+    "cast_top": [
+      "Jenna Ortega",
+      "Gwendoline Christie",
+      "Riki Lindhome",
+      "Jamie McShane"
+    ],
+    "poster_path": "/9PFonBhy4cQy7Jz20NpMygczOkv.jpg",
+    "vote_average": 8.4,
+    "vote_count": 8300,
+    "popularity": 145.0,
+    "overview": "A sleuthing, supernaturally infused mystery charting Wednesday Addams' years as a student at Nevermore Academy, as she attempts to master her emerging psychic ability, thwart a monstrous killing spree, and solve the murder mystery that embroiled her parents 25 years ago."
+  },
+  {
+    "tmdb_id": 100088,
+    "media_type": "tv",
+    "title": "The Last of Us",
+    "release_year": 2023,
+    "genres": [
+      "Drama",
+      "Sci-Fi & Fantasy",
+      "Action & Adventure"
+    ],
+    "director_or_creator": "Craig Mazin, Neil Druckmann",
+    "cast_top": [
+      "Pedro Pascal",
+      "Bella Ramsey",
+      "Gabriel Luna",
+      "Anna Torv"
+    ],
+    "poster_path": "/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg",
+    "vote_average": 8.6,
+    "vote_count": 5200,
+    "popularity": 135.0,
+    "overview": "Twenty years after modern civilization has been destroyed, Joel, a hardened survivor, is hired to smuggle Ellie, a 14-year-old girl, out of an oppressive quarantine zone. What starts as a small job soon becomes a brutal, heartbreaking journey, as they both must traverse the U.S. and depend on each other for survival."
+  },
+  {
+    "tmdb_id": 70523,
+    "media_type": "tv",
+    "title": "Dark",
+    "release_year": 2017,
+    "genres": [
+      "Sci-Fi & Fantasy",
+      "Drama",
+      "Mystery"
+    ],
+    "director_or_creator": "Baran bo Odar, Jantje Friese",
+    "cast_top": [
+      "Louis Hofmann",
+      "Oliver Masucci",
+      "Jördis Triebel",
+      "Maja Schöne"
+    ],
+    "poster_path": "/apbrbWs8M9lyOpJYU5WXrpFbk1Z.jpg",
+    "vote_average": 8.4,
+    "vote_count": 6200,
+    "popularity": 95.0,
+    "overview": "A missing child sets four families on a frantic hunt for answers as they unearth a mind-bending mystery that spans three generations in a small German town."
+  },
+  {
+    "tmdb_id": 85552,
+    "media_type": "tv",
+    "title": "Euphoria",
+    "release_year": 2019,
+    "genres": [
+      "Drama"
+    ],
+    "director_or_creator": "Sam Levinson",
+    "cast_top": [
+      "Zendaya",
+      "Hunter Schafer",
+      "Sydney Sweeney",
+      "Jacob Elordi"
+    ],
+    "poster_path": "/ypmtwojDd751Peszi62DVLytqqC.jpg",
+    "vote_average": 8.3,
+    "vote_count": 9400,
+    "popularity": 120.0,
+    "overview": "A group of high school students navigate love and friendships in a world of drugs, sex, trauma, and social media."
+  },
+  {
+    "tmdb_id": 71446,
+    "media_type": "tv",
+    "title": "Money Heist",
+    "release_year": 2017,
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
+    "director_or_creator": "Álex Pina",
+    "cast_top": [
+      "Úrsula Corberó",
+      "Álvaro Morte",
+      "Itziar Ituño",
+      "Pedro Alonso"
+    ],
+    "poster_path": "/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg",
+    "vote_average": 8.2,
+    "vote_count": 18200,
+    "popularity": 115.0,
+    "overview": "To carry out the biggest heist in history, a mysterious man called The Professor recruits a band of eight robbers who have a single characteristic: none of them has anything to lose."
+  },
+  {
+    "tmdb_id": 129,
+    "media_type": "movie",
+    "title": "Spirited Away",
+    "release_year": 2001,
+    "genres": [
+      "Animation",
+      "Family",
+      "Fantasy"
+    ],
+    "director_or_creator": "Hayao Miyazaki",
+    "cast_top": [
+      "Rumi Hiiragi",
+      "Miyu Irino",
+      "Mari Natsuki",
+      "Takashi Naito"
+    ],
+    "poster_path": "/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+    "vote_average": 8.5,
+    "vote_count": 16200,
+    "popularity": 95.0,
+    "overview": "A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had to free her family."
+  },
+  {
+    "tmdb_id": 493529,
+    "media_type": "movie",
+    "title": "Spider-Man: Into the Spider-Verse",
+    "release_year": 2018,
+    "genres": [
+      "Action",
+      "Adventure",
+      "Animation",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Bob Persichetti, Peter Ramsey",
+    "cast_top": [
+      "Shameik Moore",
+      "Jake Johnson",
+      "Hailee Steinfeld",
+      "Mahershala Ali"
+    ],
+    "poster_path": "/v7UF7ypAqjsFZFdjksjQ7IUpXdn.jpg",
+    "vote_average": 8.4,
+    "vote_count": 15000,
+    "popularity": 95.0,
+    "overview": "Teen Miles Morales becomes the new Spider-Man, while crossing paths with five counterparts from other dimensions to stop a threat for all realities."
+  },
+  {
+    "tmdb_id": 569094,
+    "media_type": "movie",
+    "title": "Spider-Man: Across the Spider-Verse",
+    "release_year": 2023,
+    "genres": [
+      "Animation",
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Joaquim Dos Santos, Kemp Powers",
+    "cast_top": [
+      "Shameik Moore",
+      "Hailee Steinfeld",
+      "Oscar Isaac",
+      "Jake Johnson"
+    ],
+    "poster_path": "/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
+    "vote_average": 8.4,
+    "vote_count": 6800,
+    "popularity": 130.0,
+    "overview": "After reuniting with Gwen Stacy, Brooklyn's full-time, friendly neighborhood Spider-Man is catapulted across the Multiverse, where he encounters the Spider Society, a team of Spider-People charged with protecting the Multiverse's very existence."
+  },
+  {
+    "tmdb_id": 372058,
+    "media_type": "movie",
+    "title": "Your Name.",
+    "release_year": 2016,
+    "genres": [
+      "Animation",
+      "Romance",
+      "Drama"
+    ],
+    "director_or_creator": "Makoto Shinkai",
+    "cast_top": [
+      "Ryunosuke Kamiki",
+      "Mone Kamishiraishi",
+      "Ryo Narita",
+      "Aoi Yuki"
+    ],
+    "poster_path": "/vfJFJPepRKapMd5G2ro7klIRysq.jpg",
+    "vote_average": 8.5,
+    "vote_count": 11000,
+    "popularity": 80.0,
+    "overview": "High schoolers Mitsuha and Taki are complete strangers living separate lives in different parts of Japan. But when they suddenly begin swapping bodies in their dreams, a bizarre connection forms between them that defies space and time."
+  },
+  {
+    "tmdb_id": 24428,
+    "media_type": "movie",
+    "title": "The Avengers",
+    "release_year": 2012,
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "director_or_creator": "Joss Whedon",
+    "cast_top": [
+      "Robert Downey Jr.",
+      "Chris Evans",
+      "Mark Ruffalo",
+      "Chris Hemsworth",
+      "Scarlett Johansson"
+    ],
+    "poster_path": "/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg",
+    "vote_average": 8.074,
+    "vote_count": 39586,
+    "popularity": 87.2925,
+    "overview": "When an unexpected enemy emerges and threatens global safety and security, Nick Fury, director of the international peacekeeping agency known as S.H.I.E.L.D., finds himself in need of a team to pull the world back from the brink of disaster. Spanning the globe, a daring recruitment effort begins!"
+  },
+  {
+    "tmdb_id": 299536,
+    "media_type": "movie",
+    "title": "Avengers: Infinity War",
+    "release_year": 2018,
+    "genres": [
+      "Adventure",
+      "Action",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Joe Russo",
+    "cast_top": [
+      "Robert Downey Jr.",
+      "Chris Evans",
+      "Chris Hemsworth",
+      "Josh Brolin",
+      "Mark Ruffalo"
+    ],
+    "poster_path": "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+    "vote_average": 8.242,
+    "vote_count": 32795,
+    "popularity": 81.2655,
+    "overview": "As the Avengers and their allies have continued to protect the world from threats too large for any one hero to handle, a new danger has emerged from the cosmic shadows: Thanos. A despot of intergalactic infamy, his goal is to collect all six Infinity Stones, artifacts of unimaginable power, and use them to inflict his twisted will on all of reality. Everything the Avengers have fought for has led up to this moment - the fate of Earth and existence itself has never been more uncertain."
+  },
+  {
+    "tmdb_id": 13,
+    "media_type": "movie",
+    "title": "Forrest Gump",
+    "release_year": 1994,
+    "genres": [
+      "Comedy",
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Robert Zemeckis",
+    "cast_top": [
+      "Tom Hanks",
+      "Robin Wright",
+      "Gary Sinise",
+      "Sally Field",
+      "Mykelti Williamson"
+    ],
+    "poster_path": "/Cw4hIUIAmSYfK9QfaUW5igp9La.jpg",
+    "vote_average": 8.463,
+    "vote_count": 30376,
+    "popularity": 42.2538,
+    "overview": "A man with a low IQ has accomplished great things in his life and been present during significant historic events—in each case, far exceeding what anyone imagined he could do. But despite all he has achieved, his one true love eludes him."
+  },
+  {
+    "tmdb_id": 120,
+    "media_type": "movie",
+    "title": "The Lord of the Rings: The Fellowship of the Ring",
+    "release_year": 2001,
+    "genres": [
+      "Adventure",
+      "Fantasy",
+      "Action"
+    ],
+    "director_or_creator": "Peter Jackson",
+    "cast_top": [
+      "Elijah Wood",
+      "Ian McKellen",
+      "Viggo Mortensen",
+      "Sean Astin",
+      "Ian Holm"
+    ],
+    "poster_path": "/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg",
+    "vote_average": 8.445,
+    "vote_count": 28274,
+    "popularity": 42.2801,
+    "overview": "Young hobbit Frodo Baggins, after inheriting a mysterious ring from his uncle Bilbo, must leave his home in order to keep it from falling into the hands of its evil creator. Along the way, a fellowship is formed to protect the ringbearer and make sure that the ring arrives at its final destination: Mt. Doom, the only place where it can be destroyed."
+  },
+  {
+    "tmdb_id": 122,
+    "media_type": "movie",
+    "title": "The Lord of the Rings: The Return of the King",
+    "release_year": 2003,
+    "genres": [
+      "Adventure",
+      "Fantasy",
+      "Action"
+    ],
+    "director_or_creator": "Peter Jackson",
+    "cast_top": [
+      "Elijah Wood",
+      "Ian McKellen",
+      "Viggo Mortensen",
+      "Sean Astin",
+      "Andy Serkis"
+    ],
+    "poster_path": "/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
+    "vote_average": 8.507,
+    "vote_count": 27260,
+    "popularity": 44.0506,
+    "overview": "As armies mass for a final battle that will decide the fate of the world--and powerful, ancient forces of Light and Dark compete to determine the outcome--one member of the Fellowship of the Ring is revealed as the noble heir to the throne of the Kings of Men. Yet, the sole hope for triumph over evil lies with a brave hobbit, Frodo, who, accompanied by his loyal friend Sam and the hideous, wretched Gollum, ventures deep into the very dark heart of Mordor on his seemingly impossible quest to destroy the Ring of Power.​"
+  },
+  {
+    "tmdb_id": 121,
+    "media_type": "movie",
+    "title": "The Lord of the Rings: The Two Towers",
+    "release_year": 2002,
+    "genres": [
+      "Adventure",
+      "Fantasy",
+      "Action"
+    ],
+    "director_or_creator": "Peter Jackson",
+    "cast_top": [
+      "Elijah Wood",
+      "Ian McKellen",
+      "Viggo Mortensen",
+      "Sean Astin",
+      "Andy Serkis"
+    ],
+    "poster_path": "/5VTN0pR8gcqV3EPUHHfMGnJYN9L.jpg",
+    "vote_average": 8.428,
+    "vote_count": 24498,
+    "popularity": 35.888,
+    "overview": "Frodo Baggins and the other members of the Fellowship continue on their sacred quest to destroy the One Ring--but on separate paths. Their destinies lie at two towers--Orthanc Tower in Isengard, where the corrupt wizard Saruman awaits, and Sauron's fortress at Barad-dur, deep within the dark lands of Mordor."
+  },
+  {
+    "tmdb_id": 634649,
+    "media_type": "movie",
+    "title": "Spider-Man: No Way Home",
+    "release_year": 2021,
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Jon Watts",
+    "cast_top": [
+      "Tom Holland",
+      "Zendaya",
+      "Benedict Cumberbatch",
+      "Jacob Batalon",
+      "Jon Favreau"
+    ],
+    "poster_path": "/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",
+    "vote_average": 7.946,
+    "vote_count": 22995,
+    "popularity": 106.5548,
+    "overview": "Peter Parker is unmasked and no longer able to separate his normal life from the high-stakes of being a super-hero. When he asks for help from Doctor Strange the stakes become even more dangerous, forcing him to discover what it truly means to be Spider-Man."
+  },
+  {
+    "tmdb_id": 497,
+    "media_type": "movie",
+    "title": "The Green Mile",
+    "release_year": 1999,
+    "genres": [
+      "Fantasy",
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Frank Darabont",
+    "cast_top": [
+      "Tom Hanks",
+      "David Morse",
+      "Bonnie Hunt",
+      "Michael Clarke Duncan",
+      "James Cromwell"
+    ],
+    "poster_path": "/8VG8fDNiy50H4FedGwdSVUPoaJe.jpg",
+    "vote_average": 8.506,
+    "vote_count": 19741,
+    "popularity": 40.3422,
+    "overview": "A supernatural tale set on death row in a Southern prison, where gentle giant John Coffey possesses the mysterious power to heal people's ailments. When the cell block's head guard, Paul Edgecomb, recognizes Coffey's miraculous gift, he tries desperately to help stave off the condemned man's execution."
+  },
+  {
+    "tmdb_id": 1891,
+    "media_type": "movie",
+    "title": "The Empire Strikes Back",
+    "release_year": 1980,
+    "genres": [
+      "Adventure",
+      "Action",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Irvin Kershner",
+    "cast_top": [
+      "Mark Hamill",
+      "Harrison Ford",
+      "Carrie Fisher",
+      "Billy Dee Williams",
+      "Anthony Daniels"
+    ],
+    "poster_path": "/nNAeTmF4CtdSgMDplXTDPOpYzsX.jpg",
+    "vote_average": 8.393,
+    "vote_count": 18792,
+    "popularity": 15.9291,
+    "overview": "The epic saga continues as Luke Skywalker, in hopes of defeating the evil Galactic Empire, learns the ways of the Jedi from aging master Yoda. But Darth Vader is more determined than ever to capture Luke. Meanwhile, rebel leader Princess Leia, cocky Han Solo, Chewbacca, and droids C-3PO and R2-D2 are thrown into various stages of capture, betrayal and despair."
+  },
+  {
+    "tmdb_id": 274,
+    "media_type": "movie",
+    "title": "The Silence of the Lambs",
+    "release_year": 1991,
+    "genres": [
+      "Crime",
+      "Thriller",
+      "Drama"
+    ],
+    "director_or_creator": "Jonathan Demme",
+    "cast_top": [
+      "Jodie Foster",
+      "Anthony Hopkins",
+      "Scott Glenn",
+      "Ted Levine",
+      "Anthony Heald"
+    ],
+    "poster_path": "/uS9m8OBk1A8eM9I042bx8XXpqAq.jpg",
+    "vote_average": 8.345,
+    "vote_count": 18431,
+    "popularity": 6.5836,
+    "overview": "Clarice Starling is a top student at the FBI's training academy.  Jack Crawford wants Clarice to interview Dr. Hannibal Lecter, a brilliant psychiatrist who is also a violent psychopath, serving life behind bars for various acts of murder and cannibalism.  Crawford believes that Lecter may have insight into a case and that Starling, as an attractive young woman, may be just the bait to draw him out."
+  },
+  {
+    "tmdb_id": 1402,
+    "media_type": "tv",
+    "title": "The Walking Dead",
+    "release_year": 2010,
+    "genres": [
+      "Action & Adventure",
+      "Drama",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Frank Darabont",
+    "cast_top": [
+      "Lauren Cohan",
+      "Norman Reedus",
+      "Jeffrey Dean Morgan",
+      "Melissa McBride",
+      "Christian Serratos"
+    ],
+    "poster_path": "/ng3cMtxYKt1OSQYqFlnKWnVsqNO.jpg",
+    "vote_average": 8.083,
+    "vote_count": 18153,
+    "popularity": 137.4345,
+    "overview": "Sheriff's deputy Rick Grimes awakens from a coma to find a post-apocalyptic world dominated by flesh-eating zombies. He sets out to find his family and encounters many other survivors along the way."
+  },
+  {
+    "tmdb_id": 424,
+    "media_type": "movie",
+    "title": "Schindler's List",
+    "release_year": 1993,
+    "genres": [
+      "Drama",
+      "History",
+      "War"
+    ],
+    "director_or_creator": "Steven Spielberg",
+    "cast_top": [
+      "Liam Neeson",
+      "Ben Kingsley",
+      "Ralph Fiennes",
+      "Caroline Goodall",
+      "Jonathan Sagall"
+    ],
+    "poster_path": "/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg",
+    "vote_average": 8.6,
+    "vote_count": 17851,
+    "popularity": 31.7096,
+    "overview": "The true story of how businessman Oskar Schindler saved over a thousand Jewish lives from the Nazis while they worked as slaves in his factory during World War II."
+  },
+  {
+    "tmdb_id": 324857,
+    "media_type": "movie",
+    "title": "Spider-Man: Into the Spider-Verse",
+    "release_year": 2018,
+    "genres": [
+      "Animation",
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Bob Persichetti",
+    "cast_top": [
+      "Shameik Moore",
+      "Jake Johnson",
+      "Hailee Steinfeld",
+      "Mahershala Ali",
+      "Brian Tyree Henry"
+    ],
+    "poster_path": "/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg",
+    "vote_average": 8.399,
+    "vote_count": 17797,
+    "popularity": 48.3545,
+    "overview": "Struggling to find his place in the world while juggling school and family, Brooklyn teenager Miles Morales is unexpectedly bitten by a radioactive spider and develops unfathomable powers just like the one and only Spider-Man. While wrestling with the implications of his new abilities, Miles discovers a super collider created by the madman Wilson \"Kingpin\" Fisk, causing others from across the Spider-Verse to be inadvertently transported to his dimension."
+  },
+  {
+    "tmdb_id": 769,
+    "media_type": "movie",
+    "title": "GoodFellas",
+    "release_year": 1990,
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Martin Scorsese",
+    "cast_top": [
+      "Robert De Niro",
+      "Ray Liotta",
+      "Joe Pesci",
+      "Lorraine Bracco",
+      "Paul Sorvino"
+    ],
+    "poster_path": "/9OkCLM73MIU2CrKZbqiT8Ln1wY2.jpg",
+    "vote_average": 8.451,
+    "vote_count": 14705,
+    "popularity": 27.3379,
+    "overview": "The true story of Henry Hill, a half-Irish, half-Sicilian Brooklyn kid who is adopted by neighbourhood gangsters at an early age and climbs the ranks of a Mafia family under the guidance of Jimmy Conway."
+  },
+  {
+    "tmdb_id": 240,
+    "media_type": "movie",
+    "title": "The Godfather Part II",
+    "release_year": 1974,
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Francis Ford Coppola",
+    "cast_top": [
+      "Al Pacino",
+      "Robert Duvall",
+      "Diane Keaton",
+      "Robert De Niro",
+      "John Cazale"
+    ],
+    "poster_path": "/sSuQTCZwqKrNBNIsksO9IAUoWP9.jpg",
+    "vote_average": 8.6,
+    "vote_count": 14280,
+    "popularity": 33.9961,
+    "overview": "In the continuing saga of the Corleone crime family, a young Vito Corleone grows up in Sicily and in 1910s New York. In the 1950s, Michael Corleone attempts to expand the family business into Las Vegas, Hollywood and Cuba."
+  },
+  {
+    "tmdb_id": 637,
+    "media_type": "movie",
+    "title": "Life Is Beautiful",
+    "release_year": 1997,
+    "genres": [
+      "Comedy",
+      "Drama"
+    ],
+    "director_or_creator": "Roberto Benigni",
+    "cast_top": [
+      "Roberto Benigni",
+      "Nicoletta Braschi",
+      "Giorgio Cantarini",
+      "Giustino Durano",
+      "Sergio Bini Bustric"
+    ],
+    "poster_path": "/74hLDKjD5aGYOotO6esUVaeISa2.jpg",
+    "vote_average": 8.4,
+    "vote_count": 14209,
+    "popularity": 21.9994,
+    "overview": "A touching story of an Italian book seller of Jewish ancestry who lives in his own little fairy tale. His creative and happy life would come to an abrupt halt when his entire family is deported to a concentration camp during World War II. While locked up he tries to convince his son that the whole thing is just a game."
+  },
+  {
+    "tmdb_id": 510,
+    "media_type": "movie",
+    "title": "One Flew Over the Cuckoo's Nest",
+    "release_year": 1975,
+    "genres": [
+      "Drama"
+    ],
+    "director_or_creator": "Miloš Forman",
+    "cast_top": [
+      "Jack Nicholson",
+      "Brad Dourif",
+      "Louise Fletcher",
+      "Danny DeVito",
+      "William Redfield"
+    ],
+    "poster_path": "/kjWsMh72V6d8KRLV4EOoSJLT1H7.jpg",
+    "vote_average": 8.406,
+    "vote_count": 11708,
+    "popularity": 21.5153,
+    "overview": "A petty criminal fakes insanity to serve his sentence in a mental ward rather than prison. He soon finds himself as a leader to the other patients—and an enemy to the cruel, domineering nurse who runs the ward."
+  },
+  {
+    "tmdb_id": 4935,
+    "media_type": "movie",
+    "title": "Howl's Moving Castle",
+    "release_year": 2004,
+    "genres": [
+      "Fantasy",
+      "Animation",
+      "Adventure"
+    ],
+    "director_or_creator": "Hayao Miyazaki",
+    "cast_top": [
+      "Chieko Baisho",
+      "Takuya Kimura",
+      "Akihiro Miwa",
+      "Tatsuya Gashuin",
+      "Ryunosuke Kamiki"
+    ],
+    "poster_path": "/13kOl2v0nD2OLbVSHnHk8GUFEhO.jpg",
+    "vote_average": 8.386,
+    "vote_count": 11385,
+    "popularity": 34.3415,
+    "overview": "Sophie, a young milliner, is turned into an elderly woman by a witch who enters her shop and curses her. She encounters a wizard named Howl and gets caught up in his resistance to fighting for the king."
+  },
+  {
+    "tmdb_id": 60625,
+    "media_type": "tv",
+    "title": "Rick and Morty",
+    "release_year": 2013,
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Sci-Fi & Fantasy",
+      "Action & Adventure"
+    ],
+    "director_or_creator": "Dan Harmon, Justin Roiland",
+    "cast_top": [
+      "Chris Parnell",
+      "Spencer Grammer",
+      "Sarah Chalke",
+      "Ian Cardoni",
+      "Harry Belden"
+    ],
+    "poster_path": "/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg",
+    "vote_average": 8.682,
+    "vote_count": 11356,
+    "popularity": 164.4859,
+    "overview": "Follows a sociopathic genius scientist who drags his inherently timid grandson on adventures across the universe."
+  },
+  {
+    "tmdb_id": 539,
+    "media_type": "movie",
+    "title": "Psycho",
+    "release_year": 1960,
+    "genres": [
+      "Horror",
+      "Thriller",
+      "Mystery"
+    ],
+    "director_or_creator": "Alfred Hitchcock",
+    "cast_top": [
+      "Anthony Perkins",
+      "Janet Leigh",
+      "Vera Miles",
+      "John Gavin",
+      "Martin Balsam"
+    ],
+    "poster_path": "/yz4QVqPx3h1hD1DfqqQkCq3rmxW.jpg",
+    "vote_average": 8.408,
+    "vote_count": 11222,
+    "popularity": 23.63,
+    "overview": "When larcenous real estate clerk Marion Crane goes on the lam with a wad of cash and hopes of starting a new life, she ends up at the notorious Bates Motel, where manager Norman Bates cares for his housebound mother."
+  },
+  {
+    "tmdb_id": 1416,
+    "media_type": "tv",
+    "title": "Grey's Anatomy",
+    "release_year": 2005,
+    "genres": [
+      "Drama"
+    ],
+    "director_or_creator": "Shonda Rhimes",
+    "cast_top": [
+      "Ellen Pompeo",
+      "Chandra Wilson",
+      "James Pickens Jr."
+    ],
+    "poster_path": "/hjJkrLXhWvGHpLeLBDFznpBTY1S.jpg",
+    "vote_average": 8.207,
+    "vote_count": 11035,
+    "popularity": 233.4288,
+    "overview": "Follows the personal and professional lives of a group of doctors at Seattle's Grey Sloan Memorial Hospital."
+  },
+  {
+    "tmdb_id": 456,
+    "media_type": "tv",
+    "title": "The Simpsons",
+    "release_year": 1989,
+    "genres": [
+      "Animation",
+      "Comedy"
+    ],
+    "director_or_creator": "Matt Groening",
+    "cast_top": [
+      "Dan Castellaneta",
+      "Julie Kavner",
+      "Nancy Cartwright",
+      "Yeardley Smith",
+      "Hank Azaria"
+    ],
+    "poster_path": "/uWpG7GqfKGQqX4YMAo3nv5OrglV.jpg",
+    "vote_average": 8.0,
+    "vote_count": 10980,
+    "popularity": 316.2587,
+    "overview": "Set in Springfield, the average American town, the show focuses on the antics and everyday adventures of the Simpson family; Homer, Marge, Bart, Lisa and Maggie, as well as a virtual cast of thousands. Since the beginning, the series has been a pop culture icon, attracting hundreds of celebrities to guest star. The show has also made name for itself in its fearless satirical take on politics, media and American life in general."
+  },
+  {
+    "tmdb_id": 423,
+    "media_type": "movie",
+    "title": "The Pianist",
+    "release_year": 2002,
+    "genres": [
+      "Drama",
+      "War"
+    ],
+    "director_or_creator": "Roman Polanski",
+    "cast_top": [
+      "Adrien Brody",
+      "Thomas Kretschmann",
+      "Frank Finlay",
+      "Maureen Lipman",
+      "Emilia Fox"
+    ],
+    "poster_path": "/2hFvxCCWrTmCYwfy7yum0GKRi3Y.jpg",
+    "vote_average": 8.371,
+    "vote_count": 10398,
+    "popularity": 29.9728,
+    "overview": "The true story of pianist Władysław Szpilman's experiences in Warsaw during the Nazi occupation. When the Jews of the city find themselves forced into a ghetto, Szpilman finds work playing in a café; and when his family is deported in 1942, he stays behind, works for a while as a laborer, and eventually goes into hiding in the ruins of the war-torn city."
+  },
+  {
+    "tmdb_id": 389,
+    "media_type": "movie",
+    "title": "12 Angry Men",
+    "release_year": 1957,
+    "genres": [
+      "Drama"
+    ],
+    "director_or_creator": "Sidney Lumet",
+    "cast_top": [
+      "Martin Balsam",
+      "John Fiedler",
+      "Lee J. Cobb",
+      "E.G. Marshall",
+      "Jack Klugman"
+    ],
+    "poster_path": "/zhG3vKWyDRaZYoaww1UVAi29T9h.jpg",
+    "vote_average": 8.571,
+    "vote_count": 10321,
+    "popularity": 32.9388,
+    "overview": "The defense and the prosecution have rested and the jury is filing into the jury room to decide if a young Spanish-American is guilty or innocent of murdering his father. What begins as an open and shut case soon becomes a mini-drama of each of the jurors' prejudices and preconceptions about the trial, the accused, and each other."
+  },
+  {
+    "tmdb_id": 429,
+    "media_type": "movie",
+    "title": "The Good, the Bad and the Ugly",
+    "release_year": 1966,
+    "genres": [
+      "Western"
+    ],
+    "director_or_creator": "Sergio Leone",
+    "cast_top": [
+      "Clint Eastwood",
+      "Eli Wallach",
+      "Lee Van Cleef",
+      "Aldo Giuffrè",
+      "Luigi Pistilli"
+    ],
+    "poster_path": "/bX2xnavhMYjWDoZp1VM6VnU1xwe.jpg",
+    "vote_average": 8.466,
+    "vote_count": 9908,
+    "popularity": 29.6489,
+    "overview": "While the Civil War rages on between the Union and the Confederacy, three men – a quiet loner, a ruthless hitman, and a Mexican bandit – comb the American Southwest in search of a strongbox containing $200,000 in stolen gold."
+  },
+  {
+    "tmdb_id": 1668,
+    "media_type": "tv",
+    "title": "Friends",
+    "release_year": 1994,
+    "genres": [
+      "Comedy"
+    ],
+    "director_or_creator": "Marta Kauffman, David Crane",
+    "cast_top": [
+      "Jennifer Aniston",
+      "Courteney Cox",
+      "Lisa Kudrow",
+      "Matt LeBlanc",
+      "Matthew Perry"
+    ],
+    "poster_path": "/2koX1xLkpTQM4IZebYvKysFW1Nh.jpg",
+    "vote_average": 8.413,
+    "vote_count": 9361,
+    "popularity": 148.3325,
+    "overview": "Six young people from New York City, on their own and struggling to survive in the real world, find the companionship, comfort and support they get from each other to be the perfect antidote to the pressures of life."
+  },
+  {
+    "tmdb_id": 1622,
+    "media_type": "tv",
+    "title": "Supernatural",
+    "release_year": 2005,
+    "genres": [
+      "Drama",
+      "Mystery",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Eric Kripke",
+    "cast_top": [
+      "Jared Padalecki",
+      "Jensen Ackles",
+      "Misha Collins"
+    ],
+    "poster_path": "/8iixmfGx5EIFPdpNvB2JvI3VIqX.jpg",
+    "vote_average": 8.314,
+    "vote_count": 8647,
+    "popularity": 232.8731,
+    "overview": "When they were boys, Sam and Dean Winchester lost their mother to a mysterious and demonic supernatural force. Subsequently, their father raised them to be soldiers. He taught them about the paranormal evil that lives in the dark corners and on the back roads of America ... and he taught them how to kill it. Now, the Winchester brothers crisscross the country in their '67 Chevy Impala, battling every kind of supernatural threat they encounter along the way. "
+  },
+  {
+    "tmdb_id": 598,
+    "media_type": "movie",
+    "title": "City of God",
+    "release_year": 2002,
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Fernando Meirelles",
+    "cast_top": [
+      "Alexandre Rodrigues",
+      "Leandro Firmino",
+      "Phellipe Haagensen",
+      "Douglas Silva",
+      "Jonathan Haagensen"
+    ],
+    "poster_path": "/k7eYdWvhYQyRQoU2TB2A2Xu2TfD.jpg",
+    "vote_average": 8.4,
+    "vote_count": 8407,
+    "popularity": 24.9334,
+    "overview": "In the poverty-stricken favelas of Rio de Janeiro in the 1970s, two young men choose different paths. Rocket is a budding photographer who documents the increasing drug-related violence of his neighborhood, while José “Zé” Pequeno is an ambitious drug dealer diving into a dangerous life of crime."
+  },
+  {
+    "tmdb_id": 1429,
+    "media_type": "tv",
+    "title": "Attack on Titan",
+    "release_year": 2013,
+    "genres": [
+      "Animation",
+      "Sci-Fi & Fantasy",
+      "Action & Adventure"
+    ],
+    "director_or_creator": "Manabu Otsuka",
+    "cast_top": [
+      "Marina Inoue",
+      "Hiro Shimono",
+      "Yuki Kaji",
+      "Natsuki Hanae",
+      "Ayane Sakura"
+    ],
+    "poster_path": "/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg",
+    "vote_average": 8.7,
+    "vote_count": 7668,
+    "popularity": 35.5193,
+    "overview": "100 years ago, the last remnants of humanity were forced to retreat behind the towering walls of a fortified city to escape the massive, man-eating Titans that roamed the land outside their fortress. Only the members of the Scouting Legion dared to stray beyond the safety of the walls – but even those brave warriors seldom returned alive. Those within the city clung to the illusion of a peaceful existence until the day that dream was shattered, and their slim chance at survival was reduced to one horrifying choice: kill – or be devoured!"
+  },
+  {
+    "tmdb_id": 687163,
+    "media_type": "movie",
+    "title": "Project Hail Mary",
+    "release_year": 2026,
+    "genres": [
+      "Science Fiction",
+      "Adventure"
+    ],
+    "director_or_creator": "Phil Lord",
+    "cast_top": [
+      "Ryan Gosling",
+      "Sandra Hüller",
+      "James Ortiz",
+      "Lionel Boyce",
+      "Milana Vayntrub"
+    ],
+    "poster_path": "/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+    "vote_average": 8.644,
+    "vote_count": 7551,
+    "popularity": 106.2991,
+    "overview": "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction."
+  },
+  {
+    "tmdb_id": 85937,
+    "media_type": "tv",
+    "title": "Demon Slayer: Kimetsu no Yaiba",
+    "release_year": 2019,
+    "genres": [
+      "Animation",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Haruo Sotozaki",
+    "cast_top": [
+      "Natsuki Hanae",
+      "Akari Kito",
+      "Hiro Shimono",
+      "Yoshitsugu Matsuoka"
+    ],
+    "poster_path": "/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg",
+    "vote_average": 8.638,
+    "vote_count": 7441,
+    "popularity": 19.1824,
+    "overview": "After a demon attack leaves his family slain and his sister cursed, Tanjiro embarks upon a perilous journey to find a cure and avenge those he's lost."
+  },
+  {
+    "tmdb_id": 12477,
+    "media_type": "movie",
+    "title": "Grave of the Fireflies",
+    "release_year": 1988,
+    "genres": [
+      "Animation",
+      "Drama",
+      "War"
+    ],
+    "director_or_creator": "Isao Takahata",
+    "cast_top": [
+      "Tsutomu Tatsumi",
+      "Ayano Shiraishi",
+      "Yoshiko Shinohara",
+      "Akemi Yamaguchi",
+      "Masayo Sakai"
+    ],
+    "poster_path": "/k9tv1rXZbOhH7eiCk378x61kNQ1.jpg",
+    "vote_average": 8.447,
+    "vote_count": 6755,
+    "popularity": 0.0169,
+    "overview": "In the final months of World War II, 14-year-old Seita and his sister Setsuko are orphaned when their mother is killed during an air raid in Kobe, Japan. After a falling out with their aunt, they move into an abandoned bomb shelter. With no surviving relatives and their emergency rations depleted, Seita and Setsuko struggle to survive."
+  },
+  {
+    "tmdb_id": 311,
+    "media_type": "movie",
+    "title": "Once Upon a Time in America",
+    "release_year": 1984,
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "director_or_creator": "Sergio Leone",
+    "cast_top": [
+      "Robert De Niro",
+      "James Woods",
+      "Elizabeth McGovern",
+      "Joe Pesci",
+      "Burt Young"
+    ],
+    "poster_path": "/i0enkzsL5dPeneWnjl1fCWm6L7k.jpg",
+    "vote_average": 8.375,
+    "vote_count": 6187,
+    "popularity": 32.4072,
+    "overview": "A former Prohibition-era Jewish gangster returns to the Lower East Side of Manhattan over thirty years later, where he once again must confront the ghosts and regrets of his old life."
+  },
+  {
+    "tmdb_id": 94605,
+    "media_type": "tv",
+    "title": "Arcane",
+    "release_year": 2021,
+    "genres": [
+      "Animation",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Christian Linke, Alex Yee",
+    "cast_top": [
+      "Hailee Steinfeld",
+      "Ella Purnell"
+    ],
+    "poster_path": "/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg",
+    "vote_average": 8.749,
+    "vote_count": 6151,
+    "popularity": 53.438,
+    "overview": "Amid the stark discord of twin cities Piltover and Zaun, two sisters fight on rival sides of a war between magic technologies and clashing convictions."
+  },
+  {
+    "tmdb_id": 95557,
+    "media_type": "tv",
+    "title": "INVINCIBLE",
+    "release_year": 2021,
+    "genres": [
+      "Animation",
+      "Drama",
+      "Sci-Fi & Fantasy",
+      "Action & Adventure"
+    ],
+    "director_or_creator": "Margaret M. Dean",
+    "cast_top": [
+      "Steven Yeun",
+      "Sandra Oh",
+      "J.K. Simmons"
+    ],
+    "poster_path": "/4tblBrslcKSifMVZ3TmtT2ukMor.jpg",
+    "vote_average": 8.633,
+    "vote_count": 6041,
+    "popularity": 81.9396,
+    "overview": "Mark Grayson is a normal teenager except for the fact that his father is the most powerful superhero on the planet. Shortly after his seventeenth birthday, Mark begins to develop powers of his own and enters into his father's tutelage."
+  },
+  {
+    "tmdb_id": 1405,
+    "media_type": "tv",
+    "title": "Dexter",
+    "release_year": 2006,
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "director_or_creator": "James Manos Jr.",
+    "cast_top": [
+      "Michael C. Hall",
+      "Jennifer Carpenter",
+      "Geoff Pierson",
+      "David Zayas",
+      "James Remar"
+    ],
+    "poster_path": "/q8dWfc4JwQuv3HayIZeO84jAXED.jpg",
+    "vote_average": 8.243,
+    "vote_count": 5812,
+    "popularity": 118.0675,
+    "overview": "Dexter Morgan, a blood spatter pattern analyst for the Miami Metro Police also leads a secret life as a serial killer, hunting down criminals who have slipped through the cracks of justice."
+  },
+  {
+    "tmdb_id": 37854,
+    "media_type": "tv",
+    "title": "One Piece",
+    "release_year": 1999,
+    "genres": [
+      "Action & Adventure",
+      "Comedy",
+      "Animation"
+    ],
+    "director_or_creator": null,
+    "cast_top": [
+      "Mayumi Tanaka",
+      "Kazuya Nakai",
+      "Mari Yaguchi",
+      "Akemi Okamura",
+      "Kappei Yamaguchi"
+    ],
+    "poster_path": "/dB4EDhre2dsC2kxYDavyKWqLQwi.jpg",
+    "vote_average": 8.75,
+    "vote_count": 5521,
+    "popularity": 52.7081,
+    "overview": "Years ago, the fearsome Pirate King, Gol D. Roger was executed leaving a huge pile of treasure and the famous \"One Piece\" behind. Whoever claims the \"One Piece\" will be named the new King of the Pirates.\n\nMonkey D. Luffy, a boy who consumed a \"Devil Fruit,\" decides to follow in the footsteps of his idol, the pirate Shanks, and find the One Piece. It helps, of course, that his body has the properties of rubber and that he's surrounded by a bevy of skilled fighters and thieves to help him along the way.\n\nLuffy will do anything to get the One Piece and become King of the Pirates!"
+  },
+  {
+    "tmdb_id": 2316,
+    "media_type": "tv",
+    "title": "The Office",
+    "release_year": 2005,
+    "genres": [
+      "Comedy"
+    ],
+    "director_or_creator": "Greg Daniels",
+    "cast_top": [
+      "Rainn Wilson",
+      "John Krasinski",
+      "Jenna Fischer",
+      "Ed Helms"
+    ],
+    "poster_path": "/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg",
+    "vote_average": 8.582,
+    "vote_count": 5441,
+    "popularity": 190.9169,
+    "overview": "The everyday lives of office employees in the Scranton, Pennsylvania branch of the fictional Dunder Mifflin Paper Company."
+  },
+  {
+    "tmdb_id": 1339713,
+    "media_type": "movie",
+    "title": "Obsession",
+    "release_year": 2026,
+    "genres": [
+      "Horror",
+      "Thriller"
+    ],
+    "director_or_creator": "Curry Barker",
+    "cast_top": [
+      "Michael Johnston",
+      "Inde Navarrette",
+      "Cooper Tomlinson",
+      "Megan Lawless",
+      "Andy Richter"
+    ],
+    "poster_path": "/bRwnj8WEKBCvmfeUNOukJPwB43K.jpg",
+    "vote_average": 8.2,
+    "vote_count": 5293,
+    "popularity": 207.7466,
+    "overview": "After breaking the mysterious \"One Wish Willow\" to win his crush's heart, a hopeless romantic finds himself getting exactly what he asked for but soon discovers that some desires come at a dark, sinister price."
+  },
+  {
+    "tmdb_id": 13916,
+    "media_type": "tv",
+    "title": "Death Note",
+    "release_year": 2006,
+    "genres": [
+      "Animation",
+      "Mystery",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Tetsuro Araki",
+    "cast_top": [
+      "Mamoru Miyano",
+      "Shido Nakamura",
+      "Aya Hirano",
+      "Kappei Yamaguchi",
+      "Kimiko Saito"
+    ],
+    "poster_path": "/tCZFfYTIwrR7n94J6G14Y4hAFU6.jpg",
+    "vote_average": 8.62,
+    "vote_count": 5121,
+    "popularity": 41.8209,
+    "overview": "Light Yagami is an ace student with great prospects—and he’s bored out of his mind. But all that changes when he finds the Death Note, a notebook dropped by a rogue Shinigami death god. Any human whose name is written in the notebook dies, and Light has vowed to use the power of the Death Note to rid the world of evil. But will Light succeed in his noble goal, or will the Death Note turn him into the very thing he fights against?"
+  },
+  {
+    "tmdb_id": 1434,
+    "media_type": "tv",
+    "title": "Family Guy",
+    "release_year": 1999,
+    "genres": [
+      "Animation",
+      "Comedy"
+    ],
+    "director_or_creator": "Seth MacFarlane",
+    "cast_top": [
+      "Seth MacFarlane",
+      "Alex Borstein",
+      "Mila Kunis",
+      "Seth Green",
+      "Patrick Warburton"
+    ],
+    "poster_path": "/3PFsEuAiyLkWsP4GG6dIV37Q6gu.jpg",
+    "vote_average": 7.41,
+    "vote_count": 5092,
+    "popularity": 198.1161,
+    "overview": "Sick, twisted, politically incorrect and Freakin' Sweet animated series featuring the adventures of the dysfunctional Griffin family. Bumbling Peter and long-suffering Lois have three kids. Stewie (a brilliant but sadistic baby bent on killing his mother and taking over the world), Meg (the oldest, and is the most unpopular girl in town) and Chris (the middle kid, he's not very bright but has a passion for movies). The final member of the family is Brian - a talking dog and much more than a pet, he keeps Stewie in check whilst sipping Martinis and sorting through his own life issues."
+  },
+  {
+    "tmdb_id": 246,
+    "media_type": "tv",
+    "title": "Avatar: The Last Airbender",
+    "release_year": 2005,
+    "genres": [
+      "Animation",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Michael Dante DiMartino, Bryan Konietzko",
+    "cast_top": [
+      "Zach Tyler Eisen",
+      "Mae Whitman",
+      "Jack De Sena",
+      "Dante Basco",
+      "Michaela Jill Murphy"
+    ],
+    "poster_path": "/yaGt4GIutpbXHsv48tWceWg6s56.jpg",
+    "vote_average": 8.78,
+    "vote_count": 5080,
+    "popularity": 43.2405,
+    "overview": "In a war-torn world of elemental magic, a young boy reawakens to undertake a dangerous mystic quest to fulfill his destiny as the Avatar, and bring peace to the world."
+  },
+  {
+    "tmdb_id": 70785,
+    "media_type": "tv",
+    "title": "Anne with an E",
+    "release_year": 2017,
+    "genres": [
+      "Drama",
+      "Family"
+    ],
+    "director_or_creator": "Moira Walley-Beckett",
+    "cast_top": [
+      "Amybeth McNulty",
+      "Geraldine James",
+      "R.H. Thomson",
+      "Lucas Jade Zumann",
+      "Joanna Douglas"
+    ],
+    "poster_path": "/6P6tXhjT5tK3qOXzxF9OMLlG7iz.jpg",
+    "vote_average": 8.651,
+    "vote_count": 4983,
+    "popularity": 25.3242,
+    "overview": "A coming-of-age story about an outsider who, against all odds and numerous challenges, fights for love and acceptance and for her place in the world. The series centers on a young orphaned girl in the late 1890s, who, after an abusive childhood spent in orphanages and the homes of strangers, is mistakenly sent to live with an elderly woman and her aging brother. Over time, 13-year-old Anne will transform their lives and eventually the small town in which they live with her unique spirit, fierce intellect and brilliant imagination."
+  },
+  {
+    "tmdb_id": 11216,
+    "media_type": "movie",
+    "title": "Cinema Paradiso",
+    "release_year": 1988,
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Giuseppe Tornatore",
+    "cast_top": [
+      "Philippe Noiret",
+      "Jacques Perrin",
+      "Marco Leonardi",
+      "Salvatore Cascio",
+      "Agnese Nano"
+    ],
+    "poster_path": "/9JhfVOveaY00o8njQu2Xrp4YWud.jpg",
+    "vote_average": 8.4,
+    "vote_count": 4959,
+    "popularity": 17.8751,
+    "overview": "A filmmaker recalls his childhood, when he fell in love with the movies at his village's theater and formed a deep friendship with the theater's projectionist."
+  },
+  {
+    "tmdb_id": 378064,
+    "media_type": "movie",
+    "title": "A Silent Voice: The Movie",
+    "release_year": 2016,
+    "genres": [
+      "Animation",
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Naoko Yamada",
+    "cast_top": [
+      "Miyu Irino",
+      "Saori Hayami",
+      "Aoi Yuuki",
+      "Kensho Ono",
+      "Yuki Kaneko"
+    ],
+    "poster_path": "/tuFaWiqX0TXoWu7DGNcmX3UW7sT.jpg",
+    "vote_average": 8.394,
+    "vote_count": 4663,
+    "popularity": 15.8405,
+    "overview": "Shouya Ishida starts bullying the new girl in class, Shouko Nishimiya, because she is deaf. But as the teasing continues, the rest of the class starts to turn on Shouya for his lack of compassion. When they leave elementary school, Shouko and Shouya do not speak to each other again... until an older, wiser Shouya, tormented by his past behaviour, decides he must see Shouko once more. He wants to atone for his sins, but is it already too late...?"
+  },
+  {
+    "tmdb_id": 5920,
+    "media_type": "tv",
+    "title": "The Mentalist",
+    "release_year": 2008,
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "director_or_creator": "Bruno Heller",
+    "cast_top": [
+      "Simon Baker",
+      "Robin Tunney",
+      "Tim Kang",
+      "Rockmond Dunbar",
+      "Joe Adler"
+    ],
+    "poster_path": "/acYXu4KaDj1NIkMgObnhe4C4a0T.jpg",
+    "vote_average": 8.4,
+    "vote_count": 4652,
+    "popularity": 406.6163,
+    "overview": "Patrick Jane, a former celebrity psychic medium, uses his razor sharp skills of observation and expertise at \"reading\" people to solve serious crimes with the California Bureau of Investigation."
+  },
+  {
+    "tmdb_id": 19404,
+    "media_type": "movie",
+    "title": "Dilwale Dulhania Le Jayenge",
+    "release_year": 1995,
+    "genres": [
+      "Comedy",
+      "Drama",
+      "Romance"
+    ],
+    "director_or_creator": "Aditya Chopra",
+    "cast_top": [
+      "Kajol",
+      "Shah Rukh Khan",
+      "Amrish Puri",
+      "Farida Jalal",
+      "Anupam Kher"
+    ],
+    "poster_path": "/lfRkUr7DYdHldAqi3PwdQGBRBPM.jpg",
+    "vote_average": 8.503,
+    "vote_count": 4618,
+    "popularity": 13.6402,
+    "overview": "Raj is a rich, carefree, happy-go-lucky second generation NRI. Simran is the daughter of Chaudhary Baldev Singh, who in spite of being an NRI is very strict about adherence to Indian values. Simran has left for India to be married to her childhood fiancé. Raj leaves for India with a mission at his hands, to claim his lady love under the noses of her whole family. Thus begins a saga."
+  },
+  {
+    "tmdb_id": 346,
+    "media_type": "movie",
+    "title": "Seven Samurai",
+    "release_year": 1954,
+    "genres": [
+      "Action",
+      "Drama"
+    ],
+    "director_or_creator": "Akira Kurosawa",
+    "cast_top": [
+      "Toshirō Mifune",
+      "Takashi Shimura",
+      "Yoshio Inaba",
+      "Seiji Miyaguchi",
+      "Minoru Chiaki"
+    ],
+    "poster_path": "/lOMGc8bnSwQhS4XyE1S99uH8NXf.jpg",
+    "vote_average": 8.5,
+    "vote_count": 4353,
+    "popularity": 16.3525,
+    "overview": "A samurai answers a village's request for protection after he falls on hard times. The town needs protection from bandits, so the samurai gathers six others to help him teach the people how to defend themselves, and the villagers provide the soldiers with food."
+  },
+  {
+    "tmdb_id": 2734,
+    "media_type": "tv",
+    "title": "Law & Order: Special Victims Unit",
+    "release_year": 1999,
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "director_or_creator": "Dick Wolf",
+    "cast_top": [
+      "Mariska Hargitay",
+      "Ice-T",
+      "Kelli Giddish",
+      "Peter Scanavino",
+      "Aimé Donna Kelly"
+    ],
+    "poster_path": "/iofokHZoUB4Qhik4PflvJl8TT6a.jpg",
+    "vote_average": 8.0,
+    "vote_count": 4331,
+    "popularity": 291.5504,
+    "overview": "In the criminal justice system, sexually-based offenses are considered especially heinous. In New York City, the dedicated detectives who investigate these vicious felonies are members of an elite squad known as the Special Victims Unit. These are their stories."
+  },
+  {
+    "tmdb_id": 83533,
+    "media_type": "movie",
+    "title": "Avatar: Fire and Ash",
+    "release_year": 2025,
+    "genres": [
+      "Science Fiction",
+      "Adventure",
+      "Fantasy"
+    ],
+    "director_or_creator": "James Cameron",
+    "cast_top": [
+      "Sam Worthington",
+      "Zoe Saldaña",
+      "Sigourney Weaver",
+      "Stephen Lang",
+      "Oona Chaplin"
+    ],
+    "poster_path": "/bRBeSHfGHwkEpImlhxPmOcUsaeg.jpg",
+    "vote_average": 7.649,
+    "vote_count": 4260,
+    "popularity": 69.6043,
+    "overview": "In the wake of the devastating war against the RDA and the loss of their eldest son, Jake Sully and Neytiri face a new threat on Pandora: the Ash People, a violent and power-hungry Na'vi tribe led by the ruthless Varang. Jake's family must fight for their survival and the future of Pandora in a conflict that pushes them to their emotional and physical limits."
+  },
+  {
+    "tmdb_id": 936075,
+    "media_type": "movie",
+    "title": "Michael",
+    "release_year": 2026,
+    "genres": [
+      "Music",
+      "Drama"
+    ],
+    "director_or_creator": "Antoine Fuqua",
+    "cast_top": [
+      "Jaafar Jackson",
+      "Colman Domingo",
+      "Nia Long",
+      "Juliano Krue Valdi",
+      "KeiLyn Durrel Jones"
+    ],
+    "poster_path": "/dueFqKLvjftnELZaGYwY7xinfaI.jpg",
+    "vote_average": 8.654,
+    "vote_count": 4254,
+    "popularity": 60.8546,
+    "overview": "The story of Michael Jackson, one of the most influential artists the world has ever known, and his life beyond the music. His journey from the discovery of his extraordinary talent as the lead of the Jackson Five, to the visionary artist whose creative ambition fueled a relentless pursuit to become the biggest entertainer in the world, highlighting both his life off-stage and some of the most iconic performances from his early solo career."
+  },
+  {
+    "tmdb_id": 124364,
+    "media_type": "tv",
+    "title": "FROM",
+    "release_year": 2022,
+    "genres": [
+      "Mystery",
+      "Drama",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "John Griffin",
+    "cast_top": [
+      "Harold Perrineau",
+      "Catalina Sandino Moreno",
+      "Ricky He",
+      "David Alpay",
+      "Chloe Van Landschoot"
+    ],
+    "poster_path": "/pRtJagIxpfODzzb0T0NAvZSzErC.jpg",
+    "vote_average": 8.493,
+    "vote_count": 4230,
+    "popularity": 137.4765,
+    "overview": "Unravel the mystery of a nightmarish town in middle America that traps all those who enter. As the unwilling residents fight to keep a sense of normalcy and search for a way out, they must also survive the threats of the surrounding forest – including the terrifying creatures that come out when the sun goes down."
+  },
+  {
+    "tmdb_id": 4057,
+    "media_type": "tv",
+    "title": "Criminal Minds",
+    "release_year": 2005,
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "director_or_creator": "Jeff Davis",
+    "cast_top": [
+      "Joe Mantegna",
+      "Paget Brewster",
+      "Adam Rodriguez",
+      "Kirsten Vangsness",
+      "A.J. Cook"
+    ],
+    "poster_path": "/hWSb4UnIjlTvnvrP98NbFSO60HA.jpg",
+    "vote_average": 8.298,
+    "vote_count": 4160,
+    "popularity": 284.4733,
+    "overview": "An elite team of FBI profilers analyze the country's most twisted criminal minds, anticipating their next moves before they strike again. The Behavioral Analysis Unit's most experienced agent is David Rossi, a founding member of the BAU who returns to help the team solve new cases."
+  },
+  {
+    "tmdb_id": 1398,
+    "media_type": "tv",
+    "title": "The Sopranos",
+    "release_year": 1999,
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
+    "director_or_creator": "David Chase",
+    "cast_top": [
+      "James Gandolfini",
+      "Edie Falco",
+      "Jamie-Lynn Sigler",
+      "Robert Iler",
+      "Lorraine Bracco"
+    ],
+    "poster_path": "/rTc7ZXdroqjkKivFPvCPX0Ru7uw.jpg",
+    "vote_average": 8.7,
+    "vote_count": 3652,
+    "popularity": 121.2967,
+    "overview": "The story of New Jersey-based Italian-American mobster Tony Soprano and the difficulties he faces as he tries to balance the conflicting requirements of his home life and the criminal organization he heads. Those difficulties are often highlighted through his ongoing professional relationship with psychiatrist Jennifer Melfi. The show features Tony's family members and Mafia associates in prominent roles and story arcs, most notably his wife Carmela and his cousin and protégé Christopher Moltisanti."
+  },
+  {
+    "tmdb_id": 1226863,
+    "media_type": "movie",
+    "title": "The Super Mario Galaxy Movie",
+    "release_year": 2026,
+    "genres": [
+      "Family",
+      "Comedy",
+      "Adventure",
+      "Fantasy",
+      "Animation"
+    ],
+    "director_or_creator": "Aaron Horvath",
+    "cast_top": [
+      "Chris Pratt",
+      "Charlie Day",
+      "Anya Taylor-Joy",
+      "Jack Black",
+      "Keegan-Michael Key"
+    ],
+    "poster_path": "/eJGWx219ZcEMVQJhAgMiqo8tYY.jpg",
+    "vote_average": 8.2,
+    "vote_count": 3606,
+    "popularity": 70.414,
+    "overview": "Having thwarted Bowser's previous plot to marry Princess Peach, Mario and Luigi now face a fresh threat in Bowser Jr., who is determined to liberate his father from captivity and restore the family legacy. Alongside companions new and old, the brothers travel across the stars to stop the young heir's crusade."
+  },
+  {
+    "tmdb_id": 40075,
+    "media_type": "tv",
+    "title": "Gravity Falls",
+    "release_year": 2012,
+    "genres": [
+      "Action & Adventure",
+      "Animation",
+      "Comedy",
+      "Family",
+      "Mystery",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Alex Hirsch",
+    "cast_top": [
+      "Jason Ritter",
+      "Kristen Schaal",
+      "Alex Hirsch",
+      "Linda Cardellini"
+    ],
+    "poster_path": "/qwi3p6PzKfQZ4YXBzv3CP5pO2dE.jpg",
+    "vote_average": 8.622,
+    "vote_count": 3588,
+    "popularity": 52.6202,
+    "overview": "Twin brother and sister Dipper and Mabel Pines are in for an unexpected adventure when they spend the summer helping their great uncle Stan run a tourist trap in the mysterious town of Gravity Falls, Oregon."
+  },
+  {
+    "tmdb_id": 1911,
+    "media_type": "tv",
+    "title": "Bones",
+    "release_year": 2005,
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
+    "director_or_creator": "Hart Hanson",
+    "cast_top": [
+      "Emily Deschanel",
+      "David Boreanaz",
+      "John Boyd",
+      "Michaela Conlin",
+      "Tamara Taylor"
+    ],
+    "poster_path": "/eyTu5c8LniVciRZIOSHTvvkkgJa.jpg",
+    "vote_average": 8.181,
+    "vote_count": 3573,
+    "popularity": 154.8333,
+    "overview": "Dr. Temperance Brennan and her colleagues at the Jeffersonian's Medico-Legal Lab assist Special Agent Seeley Booth with murder investigations when the remains are so badly decomposed, burned or destroyed that the standard identification methods are useless."
+  },
+  {
+    "tmdb_id": 79744,
+    "media_type": "tv",
+    "title": "The Rookie",
+    "release_year": 2018,
+    "genres": [
+      "Crime",
+      "Drama",
+      "Comedy"
+    ],
+    "director_or_creator": "Alexi Hawley",
+    "cast_top": [
+      "Nathan Fillion",
+      "Melissa O'Neil",
+      "Eric Winter",
+      "Alyssa Diaz",
+      "Mekia Cox"
+    ],
+    "poster_path": "/70kTz0OmjjZe7zHvIDrq2iKW7PJ.jpg",
+    "vote_average": 8.5,
+    "vote_count": 3502,
+    "popularity": 261.9566,
+    "overview": "Starting over isn't easy, especially for small-town guy John Nolan who, after a life-altering incident, is pursuing his dream of being an LAPD officer. As the force's oldest rookie, he's met with skepticism from some higher-ups who see him as just a walking midlife crisis."
+  },
+  {
+    "tmdb_id": 1368337,
+    "media_type": "movie",
+    "title": "The Odyssey",
+    "release_year": 2026,
+    "genres": [
+      "Adventure",
+      "Action",
+      "Fantasy"
+    ],
+    "director_or_creator": "Christopher Nolan",
+    "cast_top": [
+      "Matt Damon",
+      "Tom Holland",
+      "Anne Hathaway",
+      "Robert Pattinson",
+      "Himesh Patel"
+    ],
+    "poster_path": "/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg",
+    "vote_average": 8.0,
+    "vote_count": 3475,
+    "popularity": 486.7858,
+    "overview": "Odysseus, the legendary King of Ithaca, embarks on a long and perilous journey home following the Trojan War. Throughout his voyage, he is forced to confront the whims of gods, mythological monsters, and trials that stretch both his cunning and his humanity to the breaking point."
+  },
+  {
+    "tmdb_id": 34307,
+    "media_type": "tv",
+    "title": "Shameless",
+    "release_year": 2011,
+    "genres": [
+      "Drama",
+      "Comedy"
+    ],
+    "director_or_creator": "Paul Abbott, John Wells",
+    "cast_top": [
+      "William H. Macy",
+      "Jeremy Allen White",
+      "Ethan Cutkosky",
+      "Shanola Hampton",
+      "Steve Howey"
+    ],
+    "poster_path": "/ifo31fMWLmyOVpdak9K0kY4jldQ.jpg",
+    "vote_average": 8.167,
+    "vote_count": 3467,
+    "popularity": 178.184,
+    "overview": "Chicagoan Frank Gallagher is the proud single dad of six smart, industrious, independent kids, who without him would be... perhaps better off. When Frank's not at the bar spending what little money they have, he's passed out on the floor. But the kids have found ways to grow up in spite of him. They may not be like any family you know, but they make no apologies for being exactly who they are."
+  },
+  {
+    "tmdb_id": 1084242,
+    "media_type": "movie",
+    "title": "Zootopia 2",
+    "release_year": 2025,
+    "genres": [
+      "Animation",
+      "Adventure",
+      "Comedy",
+      "Mystery",
+      "Family"
+    ],
+    "director_or_creator": "Jared Bush",
+    "cast_top": [
+      "Ginnifer Goodwin",
+      "Jason Bateman",
+      "Ke Huy Quan",
+      "Fortune Feimster",
+      "Andy Samberg"
+    ],
+    "poster_path": "/oJ7g2CifqpStmoYQyaLQgEU32qO.jpg",
+    "vote_average": 7.674,
+    "vote_count": 3379,
+    "popularity": 74.046,
+    "overview": "After cracking the biggest case in Zootopia's history, rookie cops Judy Hopps and Nick Wilde find themselves on the twisting trail of a great mystery when Gary De'Snake arrives and turns the animal metropolis upside down. To crack the case, Judy and Nick must go undercover to unexpected new parts of town, where their growing partnership is tested like never before."
+  },
+  {
+    "tmdb_id": 108978,
+    "media_type": "tv",
+    "title": "Reacher",
+    "release_year": 2022,
+    "genres": [
+      "Action & Adventure",
+      "Crime"
+    ],
+    "director_or_creator": "Nick Santora",
+    "cast_top": [
+      "Alan Ritchson",
+      "Agnez Mo",
+      "Sydelle Noel",
+      "Anggun",
+      "Christopher Rodriguez Marquette"
+    ],
+    "poster_path": "/f1VCQIG2iCyOookdgOzwtUpwWC0.jpg",
+    "vote_average": 8.108,
+    "vote_count": 3217,
+    "popularity": 588.2525,
+    "overview": "Jack Reacher, a veteran military police investigator, has just recently entered civilian life. Reacher is a drifter, carrying no phone and the barest of essentials as he travels the country and explores the nation he once served."
+  },
+  {
+    "tmdb_id": 1275779,
+    "media_type": "movie",
+    "title": "Disclosure Day",
+    "release_year": 2026,
+    "genres": [
+      "Science Fiction",
+      "Thriller"
+    ],
+    "director_or_creator": "Steven Spielberg",
+    "cast_top": [
+      "Emily Blunt",
+      "Josh O'Connor",
+      "Colin Firth",
+      "Eve Hewson",
+      "Colman Domingo"
+    ],
+    "poster_path": "/AnJ8IQJI23hNpYXVNaythu061Ru.jpg",
+    "vote_average": 7.469,
+    "vote_count": 3179,
+    "popularity": 98.7434,
+    "overview": "A cybersecurity expert becomes a whistleblower after uncovering secrets about aliens, putting him on the run from a corporation. Meanwhile, a meteorologist experiencing strange phenomena joins forces with him to prove there's life beyond our understanding."
+  },
+  {
+    "tmdb_id": 67915,
+    "media_type": "tv",
+    "title": "Guardian: The Lonely and Great God",
+    "release_year": 2016,
+    "genres": [
+      "Drama",
+      "Sci-Fi & Fantasy",
+      "Comedy"
+    ],
+    "director_or_creator": "Lee Eung-bok, Kim Eun-sook",
+    "cast_top": [
+      "Gong Yoo",
+      "Kim Go-eun",
+      "Lee Dong-wook",
+      "Yoo In-na",
+      "Yook Sung-jae"
+    ],
+    "poster_path": "/sPkxHNw5BFvuCFGWw825TS7n6X3.jpg",
+    "vote_average": 8.617,
+    "vote_count": 3121,
+    "popularity": 26.1089,
+    "overview": "In his quest for a bride to break his immortal curse, a 939-year-old guardian of souls meets a grim reaper and a sprightly student with a tragic past."
+  },
+  {
+    "tmdb_id": 1083381,
+    "media_type": "movie",
+    "title": "Backrooms",
+    "release_year": 2026,
+    "genres": [
+      "Horror",
+      "Mystery",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Kane Parsons",
+    "cast_top": [
+      "Chiwetel Ejiofor",
+      "Renate Reinsve",
+      "Finn Bennett",
+      "Lukita Maxwell",
+      "Mark Duplass"
+    ],
+    "poster_path": "/rhGx6E3qRNMgj3i5su2oukNHwIQ.jpg",
+    "vote_average": 7.1,
+    "vote_count": 3118,
+    "popularity": 100.5641,
+    "overview": "A strange doorway appears in the basement of a furniture showroom."
+  },
+  {
+    "tmdb_id": 1438,
+    "media_type": "tv",
+    "title": "The Wire",
+    "release_year": 2002,
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
+    "director_or_creator": "David Simon",
+    "cast_top": [
+      "Dominic West",
+      "Lance Reddick",
+      "Sonja Sohn",
+      "Wendell Pierce",
+      "Michael Kenneth Williams"
+    ],
+    "poster_path": "/4lbclFySvugI51fwsyxBTOm4DqK.jpg",
+    "vote_average": 8.639,
+    "vote_count": 2802,
+    "popularity": 79.3413,
+    "overview": "Told from the points of view of both the Baltimore homicide and narcotics detectives and their targets, the series captures a universe in which the national war on drugs has become a permanent, self-sustaining bureaucracy, and distinctions between good and evil are routinely obliterated."
+  },
+  {
+    "tmdb_id": 97546,
+    "media_type": "tv",
+    "title": "Ted Lasso",
+    "release_year": 2020,
+    "genres": [
+      "Drama",
+      "Comedy"
+    ],
+    "director_or_creator": "Bill Lawrence, Jason Sudeikis, Joe Kelly, Brendan Hunt",
+    "cast_top": [
+      "Jason Sudeikis",
+      "Hannah Waddingham",
+      "Jeremy Swift",
+      "Brett Goldstein",
+      "Brendan Hunt"
+    ],
+    "poster_path": "/uRHsiw1wLxPHFXkkv4Ix1s0O6f4.jpg",
+    "vote_average": 8.368,
+    "vote_count": 2619,
+    "popularity": 299.5786,
+    "overview": "Ted Lasso, an American football coach, moves to England when he's hired to manage a soccer team—despite having no experience. With cynical players and a doubtful town, will he get them to see the Ted Lasso Way?"
+  },
+  {
+    "tmdb_id": 125988,
+    "media_type": "tv",
+    "title": "Silo",
+    "release_year": 2023,
+    "genres": [
+      "Sci-Fi & Fantasy",
+      "Drama"
+    ],
+    "director_or_creator": "Graham Yost",
+    "cast_top": [
+      "Rebecca Ferguson",
+      "Common",
+      "Chinaza Uche",
+      "Ashley Zukerman",
+      "Shane McRae"
+    ],
+    "poster_path": "/gMYZZvnkVNTqSVnVCphWbPXwWwb.jpg",
+    "vote_average": 8.203,
+    "vote_count": 2573,
+    "popularity": 362.9155,
+    "overview": "In a ruined and toxic future, thousands live in a giant silo deep underground. After its sheriff breaks a cardinal rule and residents die mysteriously, engineer Juliette starts to uncover shocking secrets and the truth about the silo."
+  },
+  {
+    "tmdb_id": 31911,
+    "media_type": "tv",
+    "title": "Fullmetal Alchemist: Brotherhood",
+    "release_year": 2009,
+    "genres": [
+      "Animation",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy",
+      "Drama"
+    ],
+    "director_or_creator": "Yasuhiro Irie",
+    "cast_top": [
+      "Romi Park",
+      "Rie Kugimiya",
+      "Shin-ichiro Miki",
+      "Fumiko Orikasa",
+      "Megumi Takamoto"
+    ],
+    "poster_path": "/5ZFUEOULaVml7pQuXxhpR2SmVUw.jpg",
+    "vote_average": 8.713,
+    "vote_count": 2564,
+    "popularity": 67.0609,
+    "overview": "Disregard for alchemy’s laws ripped half of Edward Elric’s limbs from his body and left his brother Alphonse’s soul clinging to a suit of armor. To restore what was lost, the brothers seek the Philosopher’s Stone. Enemies and allies – the corrupt military, the Homunculi, and foreign alchemists – will alter the Elric brothers course, but their purpose will remain unchanged and their bond unbreakable."
+  },
+  {
+    "tmdb_id": 4614,
+    "media_type": "tv",
+    "title": "NCIS",
+    "release_year": 2003,
+    "genres": [
+      "Crime",
+      "Drama",
+      "Action & Adventure"
+    ],
+    "director_or_creator": "Don McGill, Donald P. Bellisario",
+    "cast_top": [],
+    "poster_path": "/mBcu8d6x6zB1el3MPNl7cZQEQ31.jpg",
+    "vote_average": 7.6,
+    "vote_count": 2558,
+    "popularity": 220.3953,
+    "overview": "From murder and espionage to terrorism and stolen submarines, a team of special agents investigates any crime that has any connection to Navy and Marine Corps personnel, regardless of rank or position."
+  },
+  {
+    "tmdb_id": 696374,
+    "media_type": "movie",
+    "title": "Gabriel's Inferno",
+    "release_year": 2020,
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "director_or_creator": "Tosca Musk",
+    "cast_top": [
+      "Melanie Zanetti",
+      "Giulio Berruti",
+      "Kurt McKinney",
+      "Agnes Albright",
+      "Margaux Brooke"
+    ],
+    "poster_path": "/oyG9TL7FcRP4EZ9Vid6uKzwdndz.jpg",
+    "vote_average": 8.382,
+    "vote_count": 2479,
+    "popularity": 3.9471,
+    "overview": "An intriguing and sinful exploration of seduction, forbidden love, and redemption, Gabriel's Inferno is a captivating and wildly passionate tale of one man's escape from his own personal hell as he tries to earn the impossible--forgiveness and love."
+  },
+  {
+    "tmdb_id": 1433,
+    "media_type": "tv",
+    "title": "American Dad!",
+    "release_year": 2005,
+    "genres": [
+      "Animation",
+      "Comedy"
+    ],
+    "director_or_creator": "Matt Weitzman, Seth MacFarlane, Mike Barker",
+    "cast_top": [
+      "Seth MacFarlane",
+      "Wendy Schaal",
+      "Rachael MacFarlane",
+      "Scott Grimes",
+      "Dee Bradley Baker"
+    ],
+    "poster_path": "/eb9sH2am9IUSQ8GhXTNAVoujk8W.jpg",
+    "vote_average": 7.021,
+    "vote_count": 2436,
+    "popularity": 239.292,
+    "overview": "The series focuses on an eccentric motley crew that is the Smith family and their three housemates: Father, husband, and breadwinner Stan Smith; his better half housewife, Francine Smith; their college-aged daughter, Hayley Smith; and their high-school-aged son, Steve Smith. Outside of the Smith family, there are three additional main characters, including Hayley's boyfriend turned husband, Jeff Fischer; the family's man-in-a-goldfish-body pet, Klaus; and most notably the family's zany alien, Roger, who is \"full of masquerades, brazenness, and shocking antics.\""
+  },
+  {
+    "tmdb_id": 969681,
+    "media_type": "movie",
+    "title": "Spider-Man: Brand New Day",
+    "release_year": 2026,
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "director_or_creator": "Destin Daniel Cretton",
+    "cast_top": [
+      "Tom Holland",
+      "Zendaya",
+      "Mark Ruffalo",
+      "Jon Bernthal",
+      "Jacob Batalon"
+    ],
+    "poster_path": "/bjiS5ipwxb9JFy3XRRN4OAilSeX.jpg",
+    "vote_average": 7.866,
+    "vote_count": 2429,
+    "popularity": 835.3899,
+    "overview": "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see."
+  },
+  {
+    "tmdb_id": 31132,
+    "media_type": "tv",
+    "title": "Regular Show",
+    "release_year": 2010,
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "J.G. Quintel",
+    "cast_top": [
+      "J.G. Quintel",
+      "William Salyers",
+      "Mark Hamill",
+      "Sam Marin",
+      "Minty Lewis"
+    ],
+    "poster_path": "/mS5SLxMYcKfUxA0utBSR5MOAWWr.jpg",
+    "vote_average": 8.637,
+    "vote_count": 2305,
+    "popularity": 156.2464,
+    "overview": "The surreal misadventures of two best friends - a blue jay and a raccoon - as they seek to liven up their mundane jobs as groundskeepers at the local park."
+  },
+  {
+    "tmdb_id": 1314481,
+    "media_type": "movie",
+    "title": "The Devil Wears Prada 2",
+    "release_year": 2026,
+    "genres": [
+      "Comedy",
+      "Drama"
+    ],
+    "director_or_creator": "David Frankel",
+    "cast_top": [
+      "Anne Hathaway",
+      "Meryl Streep",
+      "Emily Blunt",
+      "Stanley Tucci",
+      "Kenneth Branagh"
+    ],
+    "poster_path": "/xTI42pmsP5EDnvsNJPEDubwWBQO.jpg",
+    "vote_average": 7.046,
+    "vote_count": 2262,
+    "popularity": 63.2064,
+    "overview": "Andy Sachs returns to Runway as Miranda Priestly navigates a new media landscape and Runway's position within. The duo reconnect with former assistant Emily Charlton, now the head of a luxury brand that possesses funding which could ensure Runway's survival."
+  },
+  {
+    "tmdb_id": 30984,
+    "media_type": "tv",
+    "title": "Bleach",
+    "release_year": 2004,
+    "genres": [
+      "Action & Adventure",
+      "Animation",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Tomohisa Taguchi",
+    "cast_top": [
+      "Masakazu Morita",
+      "Fumiko Orikasa",
+      "Hiroki Yasumoto",
+      "Yuki Matsuoka",
+      "Noriaki Sugiyama"
+    ],
+    "poster_path": "/2EewmxXe72ogD0EaWM8gqa0ccIw.jpg",
+    "vote_average": 8.361,
+    "vote_count": 2258,
+    "popularity": 142.2097,
+    "overview": "For as long as he can remember, Ichigo Kurosaki has been able to see ghosts. But when he meets Rukia, a Soul Reaper who battles evil spirits known as Hollows, he finds his life is changed forever. Now, with a newfound wealth of spiritual energy, Ichigo discovers his true calling: to protect the living and the dead from evil."
+  },
+  {
+    "tmdb_id": 46298,
+    "media_type": "tv",
+    "title": "Hunter x Hunter",
+    "release_year": 2011,
+    "genres": [
+      "Animation",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Hiroshi Koujina",
+    "cast_top": [
+      "Megumi Han",
+      "Mariya Ise",
+      "Issei Futamata",
+      "Keiji Fujiwara"
+    ],
+    "poster_path": "/i2EEr2uBvRlAwJ8d8zTG2Y19mIa.jpg",
+    "vote_average": 8.7,
+    "vote_count": 2191,
+    "popularity": 121.782,
+    "overview": "Gon, a young boy who lives on Whale Island, dreams of becoming a Hunter like his father, who left when Gon was still young."
+  },
+  {
+    "tmdb_id": 1007757,
+    "media_type": "movie",
+    "title": "Swapped",
+    "release_year": 2026,
+    "genres": [
+      "Adventure",
+      "Animation",
+      "Family",
+      "Fantasy"
+    ],
+    "director_or_creator": "Nathan Greno",
+    "cast_top": [
+      "Michael B. Jordan",
+      "Juno Temple",
+      "Tracy Morgan",
+      "Cedric the Entertainer",
+      "Justina Machado"
+    ],
+    "poster_path": "/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",
+    "vote_average": 8.9,
+    "vote_count": 2153,
+    "popularity": 40.5131,
+    "overview": "A small woodland creature and a majestic bird, two natural sworn enemies of the Valley, magically trade places and set off on an adventure of a lifetime to switch back. Their journey soon uncovers a greater threat—one that could endanger not only their species, but the entire valley they call home."
+  },
+  {
+    "tmdb_id": 1081003,
+    "media_type": "movie",
+    "title": "Supergirl",
+    "release_year": 2026,
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Craig Gillespie",
+    "cast_top": [
+      "Milly Alcock",
+      "Eve Ridley",
+      "Matthias Schoenaerts",
+      "Jason Momoa",
+      "David Krumholtz"
+    ],
+    "poster_path": "/uhzRnTW4DM13UQBvZP3eVNzQTuz.jpg",
+    "vote_average": 6.712,
+    "vote_count": 2148,
+    "popularity": 87.4476,
+    "overview": "When an unexpected and ruthless adversary strikes too close to home, Kara Zor-El, aka Supergirl, reluctantly joins forces with an unlikely companion on an epic, interstellar journey of vengeance and justice."
+  },
+  {
+    "tmdb_id": 1311031,
+    "media_type": "movie",
+    "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+    "release_year": 2025,
+    "genres": [
+      "Animation",
+      "Action",
+      "Fantasy"
+    ],
+    "director_or_creator": "Haruo Sotozaki",
+    "cast_top": [
+      "Natsuki Hanae",
+      "Takahiro Sakurai",
+      "Akira Ishida",
+      "Hiro Shimono",
+      "Yoshimasa Hosoya"
+    ],
+    "poster_path": "/fWVSwgjpT2D78VUh6X8UBd2rorW.jpg",
+    "vote_average": 8.785,
+    "vote_count": 2055,
+    "popularity": 69.7594,
+    "overview": "The Demon Slayer Corps are drawn into the Infinity Castle, where Tanjiro, Nezuko, and the Hashira face terrifying Upper Rank demons in a desperate fight as the final battle against Muzan Kibutsuji begins."
+  },
+  {
+    "tmdb_id": 454639,
+    "media_type": "movie",
+    "title": "Masters of the Universe",
+    "release_year": 2026,
+    "genres": [
+      "Action",
+      "Fantasy",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Travis Knight",
+    "cast_top": [
+      "Nicholas Galitzine",
+      "Camila Mendes",
+      "Idris Elba",
+      "Jared Leto",
+      "Alison Brie"
+    ],
+    "poster_path": "/oRuyGUHdoaQxWP3SDfafGkStxTC.jpg",
+    "vote_average": 7.151,
+    "vote_count": 2043,
+    "popularity": 69.5287,
+    "overview": "After being separated for 15 years, the Sword of Power leads Prince Adam back to Eternia, where he discovers his home shattered under the fiendish rule of Skeletor. To save his family and his world, Adam must join forces with his closest allies, Teela and Duncan/Man-At-Arms, and embrace his true destiny as He-Man — the most powerful man in the universe."
+  },
+  {
+    "tmdb_id": 127532,
+    "media_type": "tv",
+    "title": "Solo Leveling",
+    "release_year": 2024,
+    "genres": [
+      "Animation",
+      "Action & Adventure",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Shunsuke Nakashige",
+    "cast_top": [
+      "Taito Ban",
+      "Genta Nakamura",
+      "Haruna Mikawa",
+      "Reina Ueda",
+      "Daisuke Hirakawa"
+    ],
+    "poster_path": "/geCRueV3ElhRTr0xtJuEWJt6dJ1.jpg",
+    "vote_average": 8.682,
+    "vote_count": 1966,
+    "popularity": 46.9228,
+    "overview": "They say whatever doesn’t kill you makes you stronger, but that’s not the case for the world’s weakest hunter Sung Jinwoo. After being brutally slaughtered by monsters in a high-ranking dungeon, Jinwoo came back with the System, a program only he could see, that’s leveling him up in every way. Now, he’s inspired to discover the secrets behind his powers and the dungeon that spawned them."
+  },
+  {
+    "tmdb_id": 1084244,
+    "media_type": "movie",
+    "title": "Toy Story 5",
+    "release_year": 2026,
+    "genres": [
+      "Animation",
+      "Family",
+      "Comedy",
+      "Adventure"
+    ],
+    "director_or_creator": "Andrew Stanton",
+    "cast_top": [
+      "Joan Cusack",
+      "Tom Hanks",
+      "Tim Allen",
+      "Conan O'Brien",
+      "Scarlett Spears"
+    ],
+    "poster_path": "/9VWplgfRcYkUao9QGQXUP3rWQK7.jpg",
+    "vote_average": 8.3,
+    "vote_count": 1949,
+    "popularity": 172.6272,
+    "overview": "When Bonnie receives a Lilypad tablet as a gift and becomes obsessed, Buzz, Woody, Jessie and the rest of the gang's jobs become exponentially harder when they have to go head to head with the all-new threat to playtime."
+  },
+  {
+    "tmdb_id": 92685,
+    "media_type": "tv",
+    "title": "The Owl House",
+    "release_year": 2020,
+    "genres": [
+      "Animation",
+      "Action & Adventure",
+      "Comedy",
+      "Sci-Fi & Fantasy",
+      "Family"
+    ],
+    "director_or_creator": "Dana Terrace",
+    "cast_top": [
+      "Sarah-Nicole Robles",
+      "Issac Ryan Brown",
+      "Wendie Malick",
+      "Tati Gabrielle",
+      "Mae Whitman"
+    ],
+    "poster_path": "/rhzwpJBhi2WkfihXndS1xUdQlzB.jpg",
+    "vote_average": 8.673,
+    "vote_count": 1832,
+    "popularity": 30.2236,
+    "overview": "Luz, a self-assured teenage human girl, accidentally stumbles upon a portal to a magical new world where she befriends a rebellious witch, Eda, and an adorably tiny warrior, King."
+  },
+  {
+    "tmdb_id": 94664,
+    "media_type": "tv",
+    "title": "Mushoku Tensei: Jobless Reincarnation",
+    "release_year": 2021,
+    "genres": [
+      "Action & Adventure",
+      "Animation",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Ryosuke Shibuya",
+    "cast_top": [
+      "Yumi Uchiyama",
+      "Tomokazu Sugita",
+      "Ai Kakuma",
+      "Ai Kayano",
+      "Konomi Kohara"
+    ],
+    "poster_path": "/gLKOYIMyKlUHW0SVdskhgf9C0yy.jpg",
+    "vote_average": 8.413,
+    "vote_count": 1698,
+    "popularity": 132.0271,
+    "overview": "When a 34-year-old underachiever gets run over by a truck, his story doesn't end there. Reincarnated in a new world as an infant, Rudy will seize every opportunity to live the life he's always wanted. Armed with new friends, some freshly acquired magical abilities, and the courage to do the things he's always dreamed of, he's embarking on an epic adventure—with all of his past experience intact!"
+  },
+  {
+    "tmdb_id": 89456,
+    "media_type": "tv",
+    "title": "Primal",
+    "release_year": 2019,
+    "genres": [
+      "Action & Adventure",
+      "Animation"
+    ],
+    "director_or_creator": "Genndy Tartakovsky",
+    "cast_top": [
+      "Aaron LaPlante"
+    ],
+    "poster_path": "/mf12pRakr3eYdJtv6klQtoznnbU.jpg",
+    "vote_average": 8.659,
+    "vote_count": 1612,
+    "popularity": 21.784,
+    "overview": "A caveman forms a bond with a dinosaur as they struggle to survive in a hostile world."
+  },
+  {
+    "tmdb_id": 724089,
+    "media_type": "movie",
+    "title": "Gabriel's Inferno: Part II",
+    "release_year": 2020,
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "director_or_creator": "Tosca Musk",
+    "cast_top": [
+      "Melanie Zanetti",
+      "Giulio Berruti",
+      "James Andrew Fraser",
+      "Margaux Brooke",
+      "Agnes Albright"
+    ],
+    "poster_path": "/x5o8cLZfEXMoZczTYWLrUo1P7UJ.jpg",
+    "vote_average": 8.3,
+    "vote_count": 1561,
+    "popularity": 2.6167,
+    "overview": "Professor Gabriel Emerson finally learns the truth about Julia Mitchell's identity, but his realization comes a moment too late. Julia is done waiting for the well-respected Dante specialist to remember her and wants nothing more to do with him. Can Gabriel win back her heart before she finds love in another's arms?"
+  },
+  {
+    "tmdb_id": 60863,
+    "media_type": "tv",
+    "title": "Haikyu!!",
+    "release_year": 2014,
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Drama"
+    ],
+    "director_or_creator": "Kozue Kananiwa",
+    "cast_top": [
+      "Ayumu Murase",
+      "Kaito Ishikawa"
+    ],
+    "poster_path": "/8WEr48swcqe89Zsy5sdrGCASlIg.jpg",
+    "vote_average": 8.62,
+    "vote_count": 1544,
+    "popularity": 41.8859,
+    "overview": "Inspired by a small-statured pro volleyball player, Hinata creates a volleyball team in his last year of middle school. Unfortunately the team is matched up against the \"King of the Court\" Tobio Kageyama’s team in their first tournament and inevitably lose. After the crushing defeat, Hinata vows to surpass Kageyama After entering high school, Hinata joins the volleyball team only to find that Tobio has also joined."
+  },
+  {
+    "tmdb_id": 57706,
+    "media_type": "tv",
+    "title": "Ranma ½",
+    "release_year": 1989,
+    "genres": [
+      "Comedy",
+      "Action & Adventure",
+      "Animation",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": null,
+    "cast_top": [
+      "Kappei Yamaguchi",
+      "Megumi Hayashibara"
+    ],
+    "poster_path": "/qb1R5iLZcjIgdDIfXFQXmJadQPI.jpg",
+    "vote_average": 8.618,
+    "vote_count": 1542,
+    "popularity": 43.4749,
+    "overview": "Ranma Saotome, a teenage martial artist, and his father Genma travel to the 'cursed training ground' of Jusenkyo in China. There, despite the warnings of the Chinese guard, they fall into the cursed springs. From now on, whenever Ranma is doused in cold water, he turns into a girl and a cute, well-built redhead at that. Hot water changes him back into a man again, but only until the next time. To make matters worse, his father engages him to Akane Tendo, a girl who hates boys."
+  },
+  {
+    "tmdb_id": 72637,
+    "media_type": "tv",
+    "title": "Once",
+    "release_year": 2017,
+    "genres": [
+      "Comedy",
+      "Family",
+      "Soap"
+    ],
+    "director_or_creator": "Jorge Edelstein",
+    "cast_top": [
+      "Mariano González",
+      "Juan David Penagos",
+      "Sebastián Athié",
+      "Luan Brum",
+      "Paulina Vetrano"
+    ],
+    "poster_path": "/d4vPg3QsTJJh6C5MHARTb5CyqOu.jpg",
+    "vote_average": 8.631,
+    "vote_count": 1533,
+    "popularity": 18.59,
+    "overview": "The series revolves around Gabo, a soccer-loving teenager who, upon receiving a scholarship from the prestigious Sports Academic Institute (IAD) of Buenos Aires, will see his dream of playing at Los Halcones Dorados, the renowned amateur team of the school, and also his longing to become a professional footballer."
+  },
+  {
+    "tmdb_id": 1228710,
+    "media_type": "movie",
+    "title": "The Mandalorian and Grogu",
+    "release_year": 2026,
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "director_or_creator": "Jon Favreau",
+    "cast_top": [
+      "Pedro Pascal",
+      "Jeremy Allen White",
+      "Sigourney Weaver",
+      "Brendan Wayne",
+      "Lateef Crowder"
+    ],
+    "poster_path": "/7GV5rrUJf0BRUhoh2cyFoeNthlQ.jpg",
+    "vote_average": 7.5,
+    "vote_count": 1473,
+    "popularity": 80.9059,
+    "overview": "The evil Empire has fallen, and Imperial warlords remain scattered throughout the galaxy. As the fledgling New Republic works to protect everything the Rebellion fought for, they have enlisted the help of legendary Mandalorian bounty hunter Din Djarin and his young apprentice Grogu."
+  },
+  {
+    "tmdb_id": 113962,
+    "media_type": "tv",
+    "title": "Lioness",
+    "release_year": 2023,
+    "genres": [
+      "Drama",
+      "War & Politics"
+    ],
+    "director_or_creator": "Taylor Sheridan",
+    "cast_top": [
+      "Zoe Saldaña",
+      "Laysla De Oliveira",
+      "Dave Annable",
+      "Jill Wagner",
+      "LaMonica Garrett"
+    ],
+    "poster_path": "/rzpHPSEgPTpRs8EHbygwsOw7jC0.jpg",
+    "vote_average": 8.1,
+    "vote_count": 1459,
+    "popularity": 348.021,
+    "overview": "Cruz Manuelos, a rough-around-the-edges but passionate young Marine, is recruited to join the CIA's Lioness Engagement Team to help bring down a terrorist organization from within. Joe, the station chief of the Lioness program, is tasked with training, managing and leading her female undercover operatives."
+  },
+  {
+    "tmdb_id": 1431,
+    "media_type": "tv",
+    "title": "CSI: Crime Scene Investigation",
+    "release_year": 2000,
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "director_or_creator": "Ann Donahue, Anthony E. Zuiker",
+    "cast_top": [
+      "Ted Danson",
+      "George Eads",
+      "Jorja Fox",
+      "Eric Szmanda",
+      "Robert David Hall"
+    ],
+    "poster_path": "/i5hmoRjHNWady4AtAGICTUXknKH.jpg",
+    "vote_average": 7.615,
+    "vote_count": 1427,
+    "popularity": 220.3795,
+    "overview": "A Las Vegas team of forensic investigators are trained to solve criminal cases by scouring the crime scene, collecting irrefutable evidence and finding the missing pieces that solve the mystery."
+  },
+  {
+    "tmdb_id": 1212763,
+    "media_type": "movie",
+    "title": "Evil Dead Burn",
+    "release_year": 2026,
+    "genres": [
+      "Horror"
+    ],
+    "director_or_creator": "Sébastien Vaniček",
+    "cast_top": [
+      "Souheila Yacoub",
+      "Tandi Wright",
+      "Hunter Doohan",
+      "Luciane Buchanan",
+      "Erroll Shand"
+    ],
+    "poster_path": "/uRxrNXQWkHoENm3nwVOZDYSCx2F.jpg",
+    "vote_average": 7.728,
+    "vote_count": 1426,
+    "popularity": 61.8743,
+    "overview": "After her husband's abrupt death, Alice seeks solace with his remaining family — descendants of a leading researcher on demonic possession. As her in-laws transform one by one into creatures that feed on fear, she comes to discover that the vows she took in life survive even in death."
+  },
+  {
+    "tmdb_id": 1419406,
+    "media_type": "movie",
+    "title": "The Shadow's Edge",
+    "release_year": 2025,
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama",
+      "Thriller"
+    ],
+    "director_or_creator": "Larry Yang",
+    "cast_top": [
+      "Jackie Chan",
+      "Zhang Zifeng",
+      "Tony Leung Ka-fai",
+      "Ci Sha",
+      "Jun"
+    ],
+    "poster_path": "/cHKo3m8N1fwvEy2ZEr0xGmmMODV.jpg",
+    "vote_average": 8.212,
+    "vote_count": 1339,
+    "popularity": 66.1966,
+    "overview": "Macau Police brings the tracking expert police officer out of retirement to help catch a dangerous group of professional thieves."
+  },
+  {
+    "tmdb_id": 1044,
+    "media_type": "tv",
+    "title": "Planet Earth",
+    "release_year": 2006,
+    "genres": [
+      "Documentary"
+    ],
+    "director_or_creator": "Tom Hugh-Jones",
+    "cast_top": [
+      "David Attenborough"
+    ],
+    "poster_path": "/bNcNxUtZ520d5de5s78onoiSiwQ.jpg",
+    "vote_average": 8.6,
+    "vote_count": 1280,
+    "popularity": 18.3957,
+    "overview": "David Attenborough celebrates the amazing variety of the natural world in this epic documentary series, filmed over four years across 64 different countries."
+  },
+  {
+    "tmdb_id": 14537,
+    "media_type": "movie",
+    "title": "Harakiri",
+    "release_year": 1962,
+    "genres": [
+      "Action",
+      "Drama",
+      "History"
+    ],
+    "director_or_creator": "Masaki Kobayashi",
+    "cast_top": [
+      "Tatsuya Nakadai",
+      "Akira Ishihama",
+      "Shima Iwashita",
+      "Tetsuro Tamba",
+      "Masao Mishima"
+    ],
+    "poster_path": "/zK7HsOC7QxW1ldKIeFG8YJ5F2Eb.jpg",
+    "vote_average": 8.5,
+    "vote_count": 1271,
+    "popularity": 10.9728,
+    "overview": "Down-on-his-luck veteran Tsugumo Hanshirō enters the courtyard of the prosperous House of Iyi. Unemployed, and with no family, he hopes to find a place to commit seppuku—and a worthy second to deliver the coup de grâce in his suicide ritual. The senior counselor for the Iyi clan questions the ronin’s resolve and integrity, suspecting Hanshirō of seeking charity rather than an honorable end. What follows is a pair of interlocking stories which lay bare the difference between honor and respect, and promises to examine the legendary foundations of the Samurai code."
+  },
+  {
+    "tmdb_id": 40096,
+    "media_type": "movie",
+    "title": "A Dog's Will",
+    "release_year": 2000,
+    "genres": [
+      "Comedy",
+      "Drama",
+      "Fantasy",
+      "Romance"
+    ],
+    "director_or_creator": "Guel Arraes",
+    "cast_top": [
+      "Matheus Nachtergaele",
+      "Selton Mello",
+      "Fernanda Montenegro",
+      "Rogério Cardoso",
+      "Denise Fraga"
+    ],
+    "poster_path": "/z9Au9XtK0ARzkKGsZCzMkmKgMPf.jpg",
+    "vote_average": 8.4,
+    "vote_count": 1239,
+    "popularity": 6.2672,
+    "overview": "The lively João Grilo and the sly Chicó are poor guys living in the hinterland who cheat a bunch of people in a small town in Northeastern Brazil. When they die, they have to be judged by Christ, the Devil and the Virgin Mary before they are admitted to paradise."
+  },
+  {
+    "tmdb_id": 42705,
+    "media_type": "tv",
+    "title": "Fighting Spirit",
+    "release_year": 2000,
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Drama",
+      "Action & Adventure"
+    ],
+    "director_or_creator": null,
+    "cast_top": [
+      "Kohei Kiyasu",
+      "Rikiya Koyama",
+      "Wataru Takagi",
+      "Keiji Fujiwara",
+      "Jurota Kosugi"
+    ],
+    "poster_path": "/fEYVJu08En9A7n0e5TTpeoSjtIm.jpg",
+    "vote_average": 8.673,
+    "vote_count": 1230,
+    "popularity": 29.1172,
+    "overview": "Makunouchi Ippo is an ordinary high school student in Japan. Since he spends most of his time away from school helping his mother run the family business, he doesn't get to enjoy his younger years like most teenagers. Always a target for bullying at school (the family fishing business grants him a distinct odor), Ippo's life is one of hardship. One of these after-school bullying sessions turns Ippo's life around for the better, as he is saved by a boxer named Takamura. He decides to follow in Takamura's footsteps and train to become a boxer, giving his life direction and purpose. Ippo's path to perfecting his pugilistic prowess is just beginning..."
+  },
+  {
+    "tmdb_id": 1284041,
+    "media_type": "movie",
+    "title": "The Last House",
+    "release_year": 2026,
+    "genres": [
+      "Horror",
+      "Science Fiction",
+      "Thriller"
+    ],
+    "director_or_creator": "Louis Leterrier",
+    "cast_top": [
+      "Greta Lee",
+      "Wagner Moura",
+      "Riley Chung",
+      "Noah Alexander Sosnowski",
+      "Emma Ho"
+    ],
+    "poster_path": "/6JU7E8Vv2M11egkctWVOScxWR75.jpg",
+    "vote_average": 6.886,
+    "vote_count": 1229,
+    "popularity": 63.71,
+    "overview": "A family suddenly sealed inside their home must work together to survive against dwindling resources and the ominous threat keeping them trapped."
+  },
+  {
+    "tmdb_id": 3498,
+    "media_type": "tv",
+    "title": "Wizards of Waverly Place",
+    "release_year": 2007,
+    "genres": [
+      "Comedy",
+      "Sci-Fi & Fantasy",
+      "Kids"
+    ],
+    "director_or_creator": "Todd J. Greenwald",
+    "cast_top": [
+      "Selena Gomez",
+      "David Henrie",
+      "Jake T. Austin",
+      "Jennifer Stone",
+      "David DeLuise"
+    ],
+    "poster_path": "/spVI8Zns4Ep30zzxcoO7f7nwfck.jpg",
+    "vote_average": 8.629,
+    "vote_count": 1203,
+    "popularity": 42.6545,
+    "overview": "Alex, Justin and Max Russo are not your ordinary kids - they're wizards in training! While their parents run the Waverly Sub Station, the siblings struggle to balance their ordinary lives while learning to master their extraordinary powers."
+  },
+  {
+    "tmdb_id": 12493,
+    "media_type": "movie",
+    "title": "High and Low",
+    "release_year": 1963,
+    "genres": [
+      "Drama",
+      "Crime",
+      "Thriller",
+      "Mystery"
+    ],
+    "director_or_creator": "Akira Kurosawa",
+    "cast_top": [
+      "Toshirō Mifune",
+      "Tatsuya Nakadai",
+      "Kyōko Kagawa",
+      "Tatsuya Mihashi",
+      "Isao Kimura"
+    ],
+    "poster_path": "/tgNjemQPG96uIezpiUiXFcer5ga.jpg",
+    "vote_average": 8.379,
+    "vote_count": 1186,
+    "popularity": 10.4459,
+    "overview": "A Yokohama shoe executive faces a wrenching choice when kidnappers mistakenly seize his chauffeur’s son but demand the ransom anyway."
+  },
+  {
+    "tmdb_id": 1218925,
+    "media_type": "movie",
+    "title": "Chainsaw Man - The Movie: Reze Arc",
+    "release_year": 2025,
+    "genres": [
+      "Animation",
+      "Action",
+      "Romance",
+      "Fantasy"
+    ],
+    "director_or_creator": "Tatsuya Yoshihara",
+    "cast_top": [
+      "Kikunosuke Toya",
+      "Tomori Kusunoki",
+      "Reina Ueda",
+      "Shogo Sakata",
+      "Karin Takahashi"
+    ],
+    "poster_path": "/pHyxb2RV5wLlboAwm9ZJ9qTVEDw.jpg",
+    "vote_average": 8.537,
+    "vote_count": 1157,
+    "popularity": 40.5616,
+    "overview": "In a brutal war between devils, hunters, and secret enemies, a mysterious girl named Reze has stepped into Denji's world, and he faces his deadliest battle yet, fueled by love in a world where survival knows no rules."
+  },
+  {
+    "tmdb_id": 761053,
+    "media_type": "movie",
+    "title": "Gabriel's Inferno: Part III",
+    "release_year": 2020,
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "director_or_creator": "Tosca Musk",
+    "cast_top": [
+      "Melanie Zanetti",
+      "Giulio Berruti",
+      "Rhett Wellington Ramirez",
+      "James Andrew Fraser",
+      "Margaux Brooke"
+    ],
+    "poster_path": "/fYtHxTxlhzD4QWfEbrC1rypysSD.jpg",
+    "vote_average": 8.339,
+    "vote_count": 1094,
+    "popularity": 5.2782,
+    "overview": "The final part of the film adaption of the erotic romance novel Gabriel's Inferno written by an anonymous Canadian author under the pen name Sylvain Reynard."
+  },
+  {
+    "tmdb_id": 980431,
+    "media_type": "movie",
+    "title": "Avatar Aang: The Last Airbender",
+    "release_year": 2026,
+    "genres": [
+      "Animation",
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "director_or_creator": "Lauren Montgomery",
+    "cast_top": [
+      "Eric Nam",
+      "Dave Bautista",
+      "Jessica Matten",
+      "Román Zaragoza",
+      "Steven Yeun"
+    ],
+    "poster_path": "/3sgnSfNT27Bx5O5ukr7B26mhEQq.jpg",
+    "vote_average": 9.198,
+    "vote_count": 1053,
+    "popularity": 84.0288,
+    "overview": "Avatar Aang, the world's last Airbender, learns of an ancient power that could save his culture from extinction. With the help of his friends, he embarks on a global quest to find it before it falls into the wrong hands and threatens to upend the peace they sacrificed everything to achieve."
+  },
+  {
+    "tmdb_id": 62741,
+    "media_type": "tv",
+    "title": "Kamisama Kiss",
+    "release_year": 2012,
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Sci-Fi & Fantasy"
+    ],
+    "director_or_creator": "Sadakazu Kikuchi",
+    "cast_top": [
+      "Yui Horie",
+      "Suzuko Mimori",
+      "Daisuke Namikawa",
+      "Daisuke Kishio",
+      "Satomi Sato"
+    ],
+    "poster_path": "/cRama3S1CMYXFu1LmUkMMPoC99O.jpg",
+    "vote_average": 8.631,
+    "vote_count": 1023,
+    "popularity": 15.4402,
+    "overview": "Nanami was just a normal high school girl down on her luck until a stranger’s lips marked her as the new Land God and turned her world upside down. Now, she’s figuring out the duties of a deity with the help of Tomoe, a reformed fox demon who reluctantly becomes her familiar in a contract sealed with a kiss. The new responsibilities—and boys—are a lot to handle, like the crow demon masquerading as a gorgeous pop idol and the adorable snake spirit who’s chosen the newly minted god to be his bride. As the headstrong Tomoe tries to whip her into shape, Nanami finds that love just might have cute, pointed fox ears. With romance in the air, will the human deity be able to prove herself worthy of her new title?"
+  },
+  {
+    "tmdb_id": 1315772,
+    "media_type": "movie",
+    "title": "Minions & Monsters",
+    "release_year": 2026,
+    "genres": [
+      "Adventure",
+      "Animation",
+      "Comedy",
+      "Family",
+      "Fantasy"
+    ],
+    "director_or_creator": "Pierre Coffin",
+    "cast_top": [
+      "Pierre Coffin",
+      "Trey Parker",
+      "Christoph Waltz",
+      "Allison Janney",
+      "Jesse Eisenberg"
+    ],
+    "poster_path": "/4LwvU9SZc8QQzW1X1FAPhNbXnEU.jpg",
+    "vote_average": 7.577,
+    "vote_count": 1007,
+    "popularity": 152.749,
+    "overview": "This is the rambunctious, ridiculous and totally true story of how the Minions conquered Hollywood, became movie stars, lost everything, unleashed monsters onto the world and then banded together to try and save the planet from the mayhem they had just created."
+  }
+]

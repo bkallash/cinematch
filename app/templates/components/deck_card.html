@@ -1,0 +1,258 @@
+<!-- Rating Deck card: Tinder-style Title card, fits viewport, keyboard-first -->
+<div id="deck-card-container" class="deck-wrap cm-msg-in" data-title-id="{{ title.id if title else '' }}" x-data="deckCardLogic()" x-on:keydown.window="onKey($event)" tabindex="-1" x-init="$el.focus({ preventScroll: true })">
+    {% if title %}
+    <article class="deck-tinder cm-card overflow-hidden"
+             :class="{ 'deck-swipe-left': swipe === 'left', 'deck-swipe-right': swipe === 'right', 'deck-swipe-up': swipe === 'up' }"
+             aria-label="Rate {{ title.title }}">
+        <!-- Left: poster visual -->
+        <div class="deck-visual">
+            <img src="{{ title.poster_path | poster_url }}" alt="Poster for {{ title.title }}" fetchpriority="high" onerror="this.onerror=null;this.src='/static/images/placeholder_poster.svg'">
+            <div class="deck-visual-shade" aria-hidden="true"></div>
+            <div class="deck-visual-badges">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="deck-type">{{ title.release_year }} · {{ title.media_type }}</span>
+                    {% if title.is_suggestion %}
+                    <span class="deck-suggestion-badge">
+                        <i data-lucide="sparkles" style="width:11px;height:11px;" class="text-amber-300"></i>
+                        For You{% if title.match_score %} · {{ title.match_score }}%{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                {% if title.vote_average %}
+                <span class="deck-vote">★ {{ "%.1f"|format(title.vote_average) }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right: details + rating instrument -->
+        <div class="deck-body">
+            <div class="deck-scroll px-4 pt-3.5 pb-2 sm:px-5 sm:pt-4">
+                <div class="flex items-start justify-between gap-2">
+                    <h2 class="cm-h2 leading-tight truncate" style="font-size:19px;">{{ title.title }}</h2>
+                </div>
+                {% if title.is_suggestion and title.suggestion_reason %}
+                <div class="deck-suggestion-callout">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-notion-purple shrink-0"></i>
+                    <span class="truncate">{{ title.suggestion_reason }}</span>
+                </div>
+                {% endif %}
+                <p class="cm-meta mt-0.5 truncate">{% if title.director_or_creator %}{{ title.director_or_creator }} · {% endif %}{% if title.cast_top %}{{ title.cast_top[:3] | join(', ') }}{% endif %}</p>
+                <div class="flex flex-wrap gap-1 mt-1.5">
+                    {% for g in title.genres[:4] %}
+                    <span class="cm-tag" style="font-size:11px;padding:4px 7px;">{{ g }}</span>
+                    {% endfor %}
+                </div>
+                <p class="deck-overview mt-2" title="{{ title.overview }}">{{ title.overview or 'No synopsis available.' }}</p>
+
+                <p class="cm-strip-caption mt-3 mb-1.5">Your Rating <span x-show="score > 0">· <strong x-text="score + '/6 · ' + getScoreLabel(score)"></strong></span><span x-show="score === 0">· press <kbd class="deck-kbd">1</kbd>–<kbd class="deck-kbd">6</kbd></span></p>
+                <div class="cm-strip cm-strip-light">
+                    <div class="cm-strip-sprockets" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                    <div class="cm-strip-frames" role="radiogroup" aria-label="Rating, 1 hated to 6 masterpiece">
+                        <template x-for="val in [1, 2, 3, 4, 5, 6]" :key="val">
+                            <button type="button" :data-frame="val" @click="setScore(val)"
+                                    :aria-pressed="score === val" role="radio" :aria-checked="score === val"
+                                    :aria-label="val + ' out of 6, ' + getScoreLabel(val)"
+                                    :title="val + ' — ' + getScoreLabel(val)" class="cm-frame">
+                                <span class="n" x-text="'0' + val"></span>
+                                <span class="l" x-text="getScoreShortLabel(val)"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <div x-show="score > 0" x-cloak class="mt-2.5">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <p class="cm-strip-caption"><span x-show="score >= 4">What worked</span><span x-show="score <= 3">What didn't</span></p>
+                        <span class="text-[11px] text-notion-stone">Optional Aspect Tags</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5" style="max-height:64px;overflow-y:auto;">
+                        <template x-for="tag in activeTagsList" :key="tag">
+                            <button type="button" @click="toggleTag(tag)"
+                                    :class="selectedTags.includes(tag) ? (score >= 4 ? 'bg-notion-mint text-notion-green border-notion-green/40' : 'bg-notion-rose text-notion-pinkDeep border-notion-pink/50') : 'bg-notion-canvas text-notion-slate border-notion-hairline hover:border-notion-hairlineStrong'"
+                                    class="px-2 py-0.5 rounded-md text-xs font-semibold border">
+                                <span x-text="tag"></span>
+                            </button>
+                        </template>
+                    </div>
+                    <input type="text" x-model="note" placeholder="One sentence you'll want later…  (Enter saves)"
+                           aria-label="Micro-note, one sentence" @keydown.enter="submitRating()"
+                           class="notion-input w-full bg-notion-canvas border border-notion-hairlineStrong rounded-lg px-3 py-2 text-[13px] mt-2 placeholder-notion-muted">
+                </div>
+            </div>
+
+            <!-- Tinder action bar: skip / save / watchlist -->
+            <div class="px-4 pb-3.5 pt-2 sm:px-5 sm:pb-4 border-t border-notion-hairlineSoft bg-notion-canvas">
+                <div class="deck-actions">
+                    <button type="button" x-ref="skipBtn"
+                            @click="doSkip()" :disabled="isLeaving"
+                            aria-label="Skip this Title (Left arrow)"
+                            class="deck-btn">
+                        <i data-lucide="x" class="w-4 h-4"></i> Skip <kbd class="deck-kbd" aria-hidden="true">←</kbd>
+                    </button>
+                    <button type="button" x-ref="saveBtn" @click="submitRating()" :disabled="score === 0 || isSubmitting || isLeaving"
+                            aria-label="Save Rating and continue (Enter)"
+                            class="deck-btn deck-btn-primary">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span x-text="isSubmitting ? 'Saving…' : (score > 0 ? 'Save ' + score + '/6' : 'Pick 1–6')"></span>
+                        <kbd class="deck-kbd" aria-hidden="true">⏎</kbd>
+                    </button>
+                    <button type="button" x-ref="watchBtn"
+                            @click="doWatch()" :disabled="isLeaving"
+                            aria-label="Save to Watchlist (Right arrow)"
+                            class="deck-btn deck-btn-dark">
+                        <i data-lucide="bookmark-plus" class="w-4 h-4"></i> Later <kbd class="deck-kbd" aria-hidden="true">→</kbd>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <p class="deck-hints" aria-hidden="true">
+        <span><kbd class="deck-kbd">1</kbd>–<kbd class="deck-kbd">6</kbd> rate</span>
+        <span><kbd class="deck-kbd">⏎</kbd> save</span>
+        <span><kbd class="deck-kbd">←</kbd>/<kbd class="deck-kbd">S</kbd> skip</span>
+        <span><kbd class="deck-kbd">→</kbd>/<kbd class="deck-kbd">W</kbd> watchlist</span>
+        <span><kbd class="deck-kbd">↑</kbd><kbd class="deck-kbd">↓</kbd> adjust</span>
+    </p>
+    {% else %}
+    <div class="cm-card p-8 sm:p-10 text-center"
+         hx-get="/api/deck/next"
+         hx-trigger="load delay:1.5s"
+         hx-target="#deck-card-container"
+         hx-swap="outerHTML">
+        <p class="cm-eyebrow justify-center">
+            <i data-lucide="loader-2" style="width:13px;height:13px;" class="animate-spin mr-1 text-notion-primary"></i>
+            Fetching more Titles
+        </p>
+        <h3 class="cm-h2 mt-2">Getting your next card ready</h3>
+        <p class="text-sm text-notion-slate mt-2 max-w-sm mx-auto leading-relaxed">The Deck never runs out — pulling more Titles matching your taste.</p>
+        <div class="flex items-center justify-center gap-2 mt-5">
+            <button type="button"
+                    hx-get="/api/deck/next"
+                    hx-target="#deck-card-container"
+                    hx-swap="outerHTML"
+                    class="px-4 py-2 rounded-lg bg-notion-primary hover:bg-notion-primaryPressed text-white font-medium text-sm">Get next Title</button>
+            <a href="/search" class="px-4 py-2 rounded-lg border border-notion-hairlineStrong font-medium text-sm hover:bg-notion-surface">Search Titles</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function deckCardLogic() {
+        return {
+            // Read from the container's data-title-id at init: this function is
+            // re-served inside every htmx-swapped card, so a baked-in id can go
+            // stale and submit/skip/watch would target the previous Title.
+            titleId: null,
+            init() {
+                const raw = this.$el && this.$el.dataset ? this.$el.dataset.titleId : '';
+                const parsed = parseInt(raw, 10);
+                this.titleId = Number.isFinite(parsed) ? parsed : null;
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            },
+            score: 0,
+            selectedTags: [],
+            note: '',
+            isSubmitting: false,
+            isLeaving: false,
+            swipe: '',
+            positiveTags: ['Visuals', 'Pacing', 'Ending', 'Acting', 'Soundtrack', 'Dialogue', 'Plot', 'Atmosphere', 'Characters', 'Humor', 'Worldbuilding', 'Emotion'],
+            negativeTags: ['Pacing', 'Ending', 'Dialogue', 'Plot Holes', 'Cliche', 'Boring', 'Overrated', 'Characters', 'Visuals'],
+            get activeTagsList() { return this.score >= 4 ? this.positiveTags : this.negativeTags; },
+            setScore(val) {
+                if (this.isLeaving) return;
+                this.score = val;
+                const allowed = this.activeTagsList;
+                this.selectedTags = this.selectedTags.filter(t => allowed.includes(t));
+                this.$nextTick(() => { lucide.createIcons(); });
+            },
+            nudge(delta) {
+                const next = Math.min(6, Math.max(1, (this.score || 0) + delta));
+                this.setScore(next);
+                this.$nextTick(() => {
+                    const el = this.$el.querySelector('[data-frame="' + next + '"]');
+                    if (el && el.focus) el.focus({ preventScroll: true });
+                });
+            },
+            toggleTag(tag) {
+                this.selectedTags = this.selectedTags.includes(tag)
+                    ? this.selectedTags.filter(t => t !== tag) : [...this.selectedTags, tag];
+            },
+            onKey(e) {
+                const tag = (e.target && e.target.tagName ? e.target.tagName : '').toUpperCase();
+                const typing = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable);
+                if (e.key === 'Escape') {
+                    if (typing) { e.target.blur(); } else { this.score = 0; this.selectedTags = []; }
+                    return;
+                }
+                if (typing) return; // let 1-6 / arrows type normally in the micro-note
+                if (e.key >= '1' && e.key <= '6') {
+                    e.preventDefault();
+                    this.setScore(parseInt(e.key, 10));
+                } else if (e.key === 'Enter') {
+                    if (this.score > 0 && !this.isSubmitting) { e.preventDefault(); this.submitRating(); }
+                } else if (e.key === 'ArrowLeft' || e.key === 's' || e.key === 'S') {
+                    e.preventDefault(); this.doSkip();
+                } else if (e.key === 'ArrowRight' || e.key === 'w' || e.key === 'W') {
+                    e.preventDefault(); this.doWatch();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault(); this.nudge(1);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault(); this.nudge(-1);
+                }
+            },
+            doSkip() {
+                if (this.isLeaving || !this.titleId) return;
+                this.isLeaving = true;
+                this.swipe = 'left';
+                setTimeout(() => {
+                    htmx.ajax('POST', '/api/deck/skip/' + this.titleId, { target: '#deck-card-container', swap: 'outerHTML' });
+                    this.armSwapGuard();
+                }, 160);
+            },
+            doWatch() {
+                if (this.isLeaving || !this.titleId) return;
+                this.isLeaving = true;
+                this.swipe = 'right';
+                setTimeout(() => {
+                    htmx.ajax('POST', '/api/deck/watchlist/' + this.titleId, { target: '#deck-card-container', swap: 'outerHTML' });
+                    this.armSwapGuard();
+                }, 160);
+            },
+            armSwapGuard() {
+                // If the swap never lands (network error), unstick the card so it stays usable.
+                setTimeout(() => {
+                    if (this.$el && this.$el.isConnected) { this.isLeaving = false; this.swipe = ''; this.isSubmitting = false; }
+                }, 4000);
+            },
+            getScoreLabel(val) { return { 1: 'Hated', 2: 'Disliked', 3: 'Mediocre', 4: 'Good', 5: 'Great', 6: 'Masterpiece' }[val] || ''; },
+            getScoreShortLabel(val) { return { 1: 'Hate', 2: 'Dislike', 3: 'Meh', 4: 'Good', 5: 'Great', 6: 'Peak' }[val] || ''; },
+            async submitRating() {
+                let id = this.titleId;
+                if (this.score === 0 || this.isSubmitting || this.isLeaving || !id) return;
+                this.isSubmitting = true;
+                this.swipe = 'up';
+                try {
+                    const res = await fetch('/api/ratings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title_id: id, score: this.score, aspect_tags: this.selectedTags, notes: this.note })
+                    });
+                    if (res.ok) {
+                        document.body.dispatchEvent(new CustomEvent('ratingUpdated', { detail: { titleId: id, score: this.score } }));
+                        this.isLeaving = true;
+                        setTimeout(() => { htmx.ajax('GET', '/api/deck/next', { target: '#deck-card-container', swap: 'outerHTML' }); this.armSwapGuard(); }, 160);
+                    } else {
+                        this.swipe = '';
+                        this.isSubmitting = false;
+                    }
+                } catch (err) {
+                    console.error('Error submitting deck rating:', err);
+                    this.swipe = '';
+                    this.isSubmitting = false;
+                }
+            }
+        };
+    }
+</script>

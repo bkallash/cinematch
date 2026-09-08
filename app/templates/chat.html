@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}CineMatch - Assistant{% endblock %}
+
+{% block content %}
+<div class="max-w-[880px] mx-auto min-h-[calc(100vh-140px)] flex flex-col"
+     x-data="chatInterface()"
+     x-init="initChat()">
+
+    <!-- ======================================================== -->
+    <!-- 1. HERO STATE: Centered thesis screen (when no messages) -->
+    <!-- ======================================================== -->
+    <div x-show="!chatMode"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 transform scale-98"
+         x-transition:enter-end="opacity-100 transform scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="my-auto py-8 sm:py-12">
+
+        <p class="cm-eyebrow">
+            <span class="inline-flex items-center gap-1.5"><i data-lucide="clapperboard" style="width:13px;height:13px;" class="text-notion-primary"></i> Assistant</span>
+            <span class="dot">·</span>
+            <span><strong>{{ ratings_count or 0 }}</strong> rated <span class="dot">·</span> <strong>{{ watchlist_count or 0 }}</strong> saved</span>
+        </p>
+        <h1 class="cm-h1">What should tonight be?</h1>
+        <p class="cm-lede">Describe the vibe. Picks come back grounded in your Taste Dossier, with a reason attached to each Title and IMDb ratings included.</p>
+
+        <!-- Thesis instrument: Hero Vibe Query bar -->
+        <form id="chat-form-hero"
+              hx-post="/api/chat"
+              hx-target="#new-messages-target"
+              hx-swap="beforeend"
+              hx-indicator="#chat-loading"
+              @htmx:before-request="onHeroSubmit()"
+              @htmx:after-request="onMessageSent()"
+              class="cm-bar mt-6 shadow-sm hover:shadow transition-shadow" role="search" aria-label="Ask for a recommendation">
+            <input type="hidden" name="media_type" :value="mediaType">
+            <input type="hidden" name="session_id" :value="sessionId">
+            <i data-lucide="clapperboard" style="width:18px;height:18px;" class="text-notion-stone shrink-0"></i>
+            <input type="text" id="chat-prompt-input-hero" name="message" x-model="heroPrompt"
+                   class="focus:outline-none focus:ring-0"
+                   placeholder="A slow-burn thriller like Prisoners, or something bittersweet…"
+                   required autocomplete="off" aria-label="Describe what you want to watch">
+            <button type="submit" :disabled="!heroPrompt.trim() || isSubmitting"
+                    class="px-4 h-11 bg-notion-primary hover:bg-notion-primaryPressed disabled:bg-notion-hairline disabled:text-notion-muted text-white font-medium rounded-lg text-sm flex items-center gap-1.5 shrink-0 transition-colors">
+                <span x-text="isSubmitting ? 'Consulting…' : 'Ask'"></span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </form>
+
+        <!-- Filter bar and curated chips -->
+        <div class="flex flex-wrap items-center gap-2 mt-3.5">
+            <div class="flex items-center bg-notion-surface border border-notion-hairline p-0.5 rounded-lg text-[13px] font-medium" role="group" aria-label="Title type">
+                <button type="button" @click="mediaType = 'all'" :class="mediaType === 'all' ? 'bg-notion-canvas shadow-sm text-notion-ink border border-notion-hairline' : 'text-notion-slate hover:text-notion-ink border border-transparent'" class="px-3 py-1.5 rounded-md transition-all">All</button>
+                <button type="button" @click="mediaType = 'movie'" :class="mediaType === 'movie' ? 'bg-notion-canvas shadow-sm text-notion-ink border border-notion-hairline' : 'text-notion-slate hover:text-notion-ink border border-transparent'" class="px-3 py-1.5 rounded-md transition-all">Movies</button>
+                <button type="button" @click="mediaType = 'tv'" :class="mediaType === 'tv' ? 'bg-notion-canvas shadow-sm text-notion-ink border border-notion-hairline' : 'text-notion-slate hover:text-notion-ink border border-transparent'" class="px-3 py-1.5 rounded-md transition-all">Series</button>
+            </div>
+            <span class="cm-meta hidden sm:inline">Try</span>
+            <button type="button" @click="setPrompt('Suggest a romantic movie like La La Land with bittersweet melancholia')" class="cm-chip">Romantic like La La Land</button>
+            <button type="button" @click="setPrompt('Suggest a cozy, heartwarming holiday movie')" class="cm-chip">Cozy holiday</button>
+            <button type="button" @click="setPrompt('Mind-bending psychological thriller with a great ending twist')" class="cm-chip">Mind-bending thriller</button>
+            <button type="button" @click="setPrompt('Visually stunning sci-fi series with deep worldbuilding')" class="cm-chip">Stunning sci-fi series</button>
+        </div>
+
+        <!-- Quick guide cards -->
+        <div class="grid sm:grid-cols-2 gap-3.5 mt-8">
+            <div class="cm-card p-5 bg-notion-surfaceSoft/50">
+                <p class="cm-meta mb-1.5">How it works</p>
+                <p class="text-[15px] font-medium text-notion-ink">Say the vibe, get a shortlist</p>
+                <p class="text-sm text-notion-slate mt-1 leading-relaxed">Reference a Title, a mood, or an occasion. The Orchestrator searches your catalog, checks IMDb scores, and reranks against your Dossier.</p>
+            </div>
+            <div class="cm-card p-5 bg-notion-surfaceSoft/50">
+                <p class="cm-meta mb-1.5">It gets sharper</p>
+                <p class="text-[15px] font-medium text-notion-ink">Rate a few Titles first</p>
+                <p class="text-sm text-notion-slate mt-1 leading-relaxed">Six frames, one tap. Three Ratings are enough to synthesize your first Dossier. <a href="/deck" class="text-notion-link font-medium hover:underline">Open the Deck</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 2. CHAT STATE: Full-fledged, dedicated Chat View          -->
+    <!-- ======================================================== -->
+    <div x-show="chatMode"
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         class="flex-1 flex flex-col min-h-0 w-full">
+
+        <!-- Booth Chat Top Header -->
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-notion-hairline">
+            <div class="flex items-center gap-2.5">
+                <span class="w-7 h-7 rounded-lg bg-notion-ink flex items-center justify-center text-white shrink-0 shadow-sm">
+                    <i data-lucide="clapperboard" style="width:14px;height:14px;"></i>
+                </span>
+                <div>
+                    <h2 class="font-semibold text-sm text-notion-ink leading-tight">Concierge Chat</h2>
+                    <p class="cm-meta text-[11px] text-notion-steel">Grounded in your Taste Dossier</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Media type switcher inside chat header -->
+                <div class="hidden sm:flex items-center bg-notion-surface border border-notion-hairline p-0.5 rounded-lg text-[12px] font-medium">
+                    <button type="button" @click="mediaType = 'all'" :class="mediaType === 'all' ? 'bg-notion-canvas shadow-xs text-notion-ink font-semibold' : 'text-notion-slate hover:text-notion-ink'" class="px-2.5 py-1 rounded-md">All</button>
+                    <button type="button" @click="mediaType = 'movie'" :class="mediaType === 'movie' ? 'bg-notion-canvas shadow-xs text-notion-ink font-semibold' : 'text-notion-slate hover:text-notion-ink'" class="px-2.5 py-1 rounded-md">Movies</button>
+                    <button type="button" @click="mediaType = 'tv'" :class="mediaType === 'tv' ? 'bg-notion-canvas shadow-xs text-notion-ink font-semibold' : 'text-notion-slate hover:text-notion-ink'" class="px-2.5 py-1 rounded-md">Series</button>
+                </div>
+
+                <!-- Clear / New Chat Action -->
+                <button type="button"
+                        @click="clearChat()"
+                        title="Start a new conversation"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-notion-slate hover:text-notion-ink bg-notion-surface hover:bg-notion-hairlineSoft border border-notion-hairline rounded-lg transition-colors">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>New Chat</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Conversation Scrollable Feed -->
+        <div id="chat-messages-container" class="flex-1 space-y-6 pb-28" aria-live="polite">
+            <!-- Existing server-rendered messages -->
+            <div id="initial-messages-target" class="space-y-6">
+                {% if messages %}
+                    {% for msg in messages %}
+                        {% set role = msg.role %}
+                        {% set content = msg.content %}
+                        {% set recommendations = msg.recommendations %}
+                        {% include "components/chat_message.html" %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Newly appended message turns -->
+            <div id="new-messages-target" class="space-y-6"></div>
+
+            <!-- Loading indicator -->
+            <div id="chat-loading" class="htmx-indicator flex items-center gap-3 p-4 bg-notion-surface border border-notion-hairline rounded-xl max-w-md shadow-xs">
+                <div class="w-4 h-4 rounded-full border-2 border-notion-primary border-t-transparent animate-spin shrink-0" aria-hidden="true"></div>
+                <p class="text-sm"><span class="font-medium text-notion-primary">Reading your Dossier…</span> <span class="text-notion-slate">evaluating IMDb ratings & reranking picks</span></p>
+            </div>
+
+            <!-- Bottom scroll anchor -->
+            <div id="chat-bottom-anchor" class="h-2"></div>
+        </div>
+
+        <!-- Sticky Bottom Chat Input Dock -->
+        <div class="cm-chat-dock">
+            <!-- Follow-up suggestion chips -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs">
+                <span class="cm-meta text-[10px] shrink-0 mr-1 hidden sm:inline">Follow-up:</span>
+                <button type="button" @click="setDockPrompt('Give me something darker with high suspense')" class="cm-chip text-xs py-1 px-2.5">Darker & suspenseful</button>
+                <button type="button" @click="setDockPrompt('More like the first pick, but faster paced')" class="cm-chip text-xs py-1 px-2.5">Faster paced</button>
+                <button type="button" @click="setDockPrompt('Suggest an overlooked, high-rated gem with a great soundtrack')" class="cm-chip text-xs py-1 px-2.5">High-rated gem</button>
+                <button type="button" @click="setDockPrompt('Give me a limited mini-series with great acting')" class="cm-chip text-xs py-1 px-2.5">Mini-series</button>
+            </div>
+
+            <!-- The Dock Prompt Form -->
+            <form id="chat-form-dock"
+                  hx-post="/api/chat"
+                  hx-target="#new-messages-target"
+                  hx-swap="beforeend"
+                  hx-indicator="#chat-loading"
+                  @htmx:before-request="onDockSubmit()"
+                  @htmx:after-request="onMessageSent()"
+                  class="cm-bar shadow-sm hover:shadow transition-shadow" role="search" aria-label="Ask for another recommendation">
+                <input type="hidden" name="media_type" :value="mediaType">
+                <input type="hidden" name="session_id" :value="sessionId">
+                <i data-lucide="clapperboard" style="width:18px;height:18px;" class="text-notion-stone shrink-0"></i>
+                <input type="text" id="chat-prompt-input-dock" name="message" x-model="dockPrompt"
+                       class="focus:outline-none focus:ring-0"
+                       placeholder="Ask for more recommendations, adjust tone, or specify a director…"
+                       required autocomplete="off" aria-label="Ask follow up vibe">
+                <button type="submit" :disabled="!dockPrompt.trim() || isSubmitting"
+                        class="px-4 h-11 bg-notion-primary hover:bg-notion-primaryPressed disabled:bg-notion-hairline disabled:text-notion-muted text-white font-medium rounded-lg text-sm flex items-center gap-1.5 shrink-0 transition-colors">
+                    <span x-text="isSubmitting ? 'Consulting…' : 'Ask'"></span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function chatInterface() {
+        return {
+            chatMode: {{ 'true' if messages and messages|length > 0 else 'false' }},
+            sessionId: '{{ session_id or "" }}',
+            mediaType: 'all',
+            heroPrompt: '',
+            dockPrompt: '',
+            isSubmitting: false,
+
+            initChat() {
+                if (this.chatMode) {
+                    this.$nextTick(() => {
+                        this.scrollToBottom(false);
+                    });
+                }
+            },
+
+            setPrompt(txt) {
+                this.heroPrompt = txt;
+                const input = document.getElementById('chat-prompt-input-hero');
+                if (input) input.focus();
+            },
+
+            setDockPrompt(txt) {
+                this.dockPrompt = txt;
+                const input = document.getElementById('chat-prompt-input-dock');
+                if (input) input.focus();
+            },
+
+            onHeroSubmit() {
+                this.isSubmitting = true;
+                this.chatMode = true;
+                this.$nextTick(() => {
+                    this.scrollToBottom(true);
+                });
+            },
+
+            onDockSubmit() {
+                this.isSubmitting = true;
+                this.$nextTick(() => {
+                    this.scrollToBottom(true);
+                });
+            },
+
+            onMessageSent() {
+                this.heroPrompt = '';
+                this.dockPrompt = '';
+                this.isSubmitting = false;
+                this.$nextTick(() => {
+                    lucide.createIcons();
+                    document.querySelectorAll('#new-messages-target > *').forEach(el => el.classList.add('cm-msg-in'));
+                    this.scrollToBottom(true);
+                    const dockInput = document.getElementById('chat-prompt-input-dock');
+                    if (dockInput) dockInput.focus({ preventScroll: true });
+                });
+            },
+
+            scrollToBottom(smooth = true) {
+                const anchor = document.getElementById('chat-bottom-anchor');
+                if (anchor) {
+                    anchor.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' });
+                }
+            },
+
+            async clearChat() {
+                try {
+                    await fetch('/api/chat/clear', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ session_id: this.sessionId })
+                    });
+                    this.sessionId = 'session_' + Math.random().toString(36).substring(2, 14);
+                    const initial = document.getElementById('initial-messages-target');
+                    if (initial) initial.innerHTML = '';
+                    const next = document.getElementById('new-messages-target');
+                    if (next) next.innerHTML = '';
+                    this.chatMode = false;
+                    this.heroPrompt = '';
+                    this.dockPrompt = '';
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                        const heroInput = document.getElementById('chat-prompt-input-hero');
+                        if (heroInput) heroInput.focus();
+                    });
+                } catch (err) {
+                    console.error('Failed to clear chat session:', err);
+                }
+            }
+        };
+    }
+</script>
+{% endblock %}

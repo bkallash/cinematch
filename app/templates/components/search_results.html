@@ -1,0 +1,43 @@
+<!-- Browse grid: one vertical Title card, shared by Search and Library -->
+<div id="search-results-target">
+    {% if query and (not results or results | length == 0) %}
+    <div class="cm-card p-10 text-center max-w-[880px]">
+        <p class="cm-eyebrow justify-center">No matches</p>
+        <h3 class="cm-h2 mt-2">Nothing found for “{{ query }}”</h3>
+        <p class="text-sm text-notion-slate mt-2">Check the spelling, or try the original Title.</p>
+    </div>
+    {% elif results %}
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        {% for item in results %}
+        <article class="cm-card flex flex-col group">
+            <div class="cm-poster relative aspect-[2/3] overflow-hidden border-b border-notion-hairline">
+                <a href="/deck?title_id={{ item.id }}" aria-label="Open {{ item.title }} in Rating Deck" title="Open {{ item.title }} in Deck" class="block w-full h-full">
+                    <img src="{{ item.poster_path | poster_url }}" alt="Poster for {{ item.title }}" loading="lazy" onerror="this.onerror=null;this.src='/static/images/placeholder_poster.svg'"
+                         class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300">
+                </a>
+                <span class="cm-meta absolute top-2 left-2 bg-notion-canvas/95 border border-notion-hairline rounded-md px-1.5 py-1 pointer-events-none">{{ item.media_type }}</span>
+                {% if item.user_rating %}
+                <span class="absolute top-2 right-2 px-2 py-1 rounded-md bg-notion-ink text-white font-mono text-[11px] pointer-events-none">{{ item.user_rating }}/6</span>
+                {% endif %}
+            </div>
+            <div class="p-3.5 flex flex-col flex-1">
+                <a href="/deck?title_id={{ item.id }}" title="Open {{ item.title }} in Deck" class="hover:underline underline-offset-2 decoration-notion-hairlineStrong">
+                    <h4 class="font-semibold text-[14px] leading-snug line-clamp-1" title="{{ item.title }}">{{ item.title }}</h4>
+                </a>
+                <p class="cm-meta mt-1">{{ item.release_year or '—' }}{% if item.genres %} · {{ item.genres[0] }}{% endif %}</p>
+                <div class="flex items-center gap-1.5 pt-3 mt-auto">
+                    <a href="/deck?title_id={{ item.id }}"
+                            class="flex-1 py-2 rounded-lg text-[13px] font-medium text-center {% if item.user_rating %}border border-notion-hairlineStrong hover:bg-notion-surface{% else %}bg-notion-primary hover:bg-notion-primaryPressed text-white{% endif %}">
+                        {% if item.user_rating %}{{ item.user_rating }}/6 · Edit{% else %}Rate{% endif %}
+                    </a>
+                    <button type="button" hx-post="/api/watchlist/toggle/{{ item.id }}" hx-swap="outerHTML" aria-label="Save {{ item.title }} to Watchlist"
+                            class="p-2 rounded-lg border border-notion-hairline hover:bg-notion-surface text-notion-slate">
+                        <i data-lucide="bookmark" style="width:15px;height:15px;" class="{% if item.is_in_watchlist %}fill-notion-primary text-notion-primary{% endif %}"></i>
+                    </button>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
