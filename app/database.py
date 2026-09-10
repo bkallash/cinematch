@@ -174,10 +174,32 @@ def init_db():
             conn.execute("ALTER TABLE titles ADD COLUMN imdb_id TEXT")
         if "imdb_rating" not in existing_cols:
             conn.execute("ALTER TABLE titles ADD COLUMN imdb_rating REAL")
+        if "embedding_model" not in existing_cols:
+            conn.execute("ALTER TABLE titles ADD COLUMN embedding_model TEXT")
+            conn.execute("DELETE FROM for_you_cache")
+
+        # A monotonic revision catches same-second edits and writes during synthesis.
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS ratings_state (
+                id INTEGER PRIMARY KEY CHECK(id = 1), revision INTEGER NOT NULL DEFAULT 0
+            );
+            INSERT OR IGNORE INTO ratings_state (id) VALUES (1);
+        """)
+        for event in ("INSERT", "UPDATE", "DELETE"):
+            conn.execute(f"""
+                CREATE TRIGGER IF NOT EXISTS ratings_changed_{event.lower()}
+                AFTER {event} ON ratings BEGIN
+                    UPDATE ratings_state SET revision = revision + 1 WHERE id = 1;
+                    UPDATE taste_dossiers SET is_dirty = 1;
+                    DELETE FROM for_you_cache;
+                END
+            """)
 
         # Safely migrate for_you_cache table for existing databases
         existing_cache_cols = [c[1] for c in conn.execute("PRAGMA table_info(for_you_cache)").fetchall()]
         if "last_rated_at" not in existing_cache_cols:
             conn.execute("ALTER TABLE for_you_cache ADD COLUMN last_rated_at TIMESTAMP")
+        if "ratings_revision" not in existing_cache_cols:
+            conn.execute("ALTER TABLE for_you_cache ADD COLUMN ratings_revision INTEGER NOT NULL DEFAULT -1")
 
         logger.info("Database initialized successfully.")

@@ -1,6 +1,8 @@
 import logging
+import hashlib
+import re
 import numpy as np
-from typing import List, Optional, Union
+from typing import List, Optional
 from openai import AsyncOpenAI
 from app.config import settings
 
@@ -8,9 +10,16 @@ logger = logging.getLogger(__name__)
 
 class EmbeddingService:
     def __init__(self):
-        self.provider = settings.EMBEDDING_PROVIDER
-        self.model = settings.EMBEDDING_MODEL
         self._client: Optional[AsyncOpenAI] = None
+
+    @property
+    def is_local(self) -> bool:
+        return settings.EMBEDDING_PROVIDER == "local" or not settings.OPENROUTER_API_KEY
+
+    @property
+    def model_key(self) -> str:
+        model = "local:token-hash-v1" if self.is_local else f"openrouter:{settings.EMBEDDING_MODEL}"
+        return f"{model}:{settings.EMBEDDING_DIM}"
 
     def _get_client(self) -> AsyncOpenAI:
         if self._client is None:
@@ -18,42 +27,49 @@ class EmbeddingService:
             api_key = settings.OPENROUTER_API_KEY or "dummy_key_for_init"
             self._client = AsyncOpenAI(
                 api_key=api_key,
-                base_url=settings.OPENROUTER_BASE_URL
+                base_url=settings.OPENROUTER_BASE_URL,
+                timeout=30.0,
+                max_retries=1,
             )
         return self._client
 
     async def get_embedding(self, text: str) -> np.ndarray:
         """Generate normalized float32 vector embedding for text."""
-        clean_text = text.strip()
-        if not clean_text:
-            clean_text = "cinema film"
+        return (await self.get_embeddings([text]))[0]
 
-        if not settings.OPENROUTER_API_KEY:
-            logger.warning("OPENROUTER_API_KEY not set. Generating deterministic pseudo-embedding.")
-            # Deterministic hash-based pseudo vector for testing without active API key
-            rng = np.random.default_rng(abs(hash(clean_text)) % (2**32))
-            vec = rng.standard_normal(settings.EMBEDDING_DIM).astype(np.float32)
-            norm = np.linalg.norm(vec)
-            return vec / (norm if norm > 0 else 1.0)
+    async def get_embeddings(self, texts: List[str]) -> List[np.ndarray]:
+        """Embed a batch. Cloud failures never become stored local vectors."""
+        if not texts:
+            return []
+        clean = [text.strip() or "cinema film" for text in texts]
+        if self.is_local:
+            return [self._local_embedding(text) for text in clean]
+        response = await self._get_client().embeddings.create(
+            model=settings.EMBEDDING_MODEL, input=clean, dimensions=settings.EMBEDDING_DIM,
+        )
+        items = sorted(response.data, key=lambda item: item.index)
+        if [item.index for item in items] != list(range(len(clean))):
+            raise ValueError("Embedding response did not match the requested batch")
+        vectors = []
+        for item in items:
+            vec = np.asarray(item.embedding, dtype=np.float32)
+            if vec.shape != (settings.EMBEDDING_DIM,) or not np.isfinite(vec).all() or np.linalg.norm(vec) == 0:
+                raise ValueError("Invalid embedding dimensions or values")
+            vectors.append(vec / np.linalg.norm(vec))
+        return vectors
 
-        client = self._get_client()
-        try:
-            response = await client.embeddings.create(
-                model=self.model,
-                input=clean_text
-            )
-            embedding_data = response.data[0].embedding
-            vec = np.array(embedding_data, dtype=np.float32)
-            norm = np.linalg.norm(vec)
-            if norm > 0:
-                vec = vec / norm
-            return vec
-        except Exception as e:
-            logger.error(f"Error calling embedding API: {e}. Falling back to hash vector.")
-            rng = np.random.default_rng(abs(hash(clean_text)) % (2**32))
-            vec = rng.standard_normal(settings.EMBEDDING_DIM).astype(np.float32)
-            norm = np.linalg.norm(vec)
-            return vec / (norm if norm > 0 else 1.0)
+    @staticmethod
+    def _local_embedding(text: str) -> np.ndarray:
+        # Stable token overlap gives basic offline matching without a model download.
+        stop_words = {"the", "a", "an", "and", "or", "of", "to", "in", "is", "with", "for",
+                      "title", "format", "genres", "director", "creator", "leading", "cast",
+                      "plot", "atmospheric", "themes", "unknown"}
+        vec = np.zeros(settings.EMBEDDING_DIM, dtype=np.float32)
+        for token in set(re.findall(r"\w+", text.casefold())) - stop_words:
+            digest = hashlib.sha256(token.encode("utf-8")).digest()
+            vec[int.from_bytes(digest[:4], "big") % len(vec)] += 1.0 if digest[4] & 1 else -1.0
+        norm = np.linalg.norm(vec)
+        return vec / norm if norm else vec
 
     @staticmethod
     def build_title_embedding_text(title_data: dict) -> str:

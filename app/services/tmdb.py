@@ -349,6 +349,49 @@ class TMDBService:
             })
         return results
 
+    async def find_person_titles(self, name: str, media_type: str) -> List[Dict[str, Any]]:
+        """Find acting/directing credits before fetching full title details."""
+        if not self.api_key:
+            return []
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                response = await client.get(f"{self.base_url}/search/person",
+                                            params=self._get_params({"query": name}), headers=self._get_headers())
+                response.raise_for_status()
+                people = response.json().get("results", [])
+                person = next((p for p in people if p["name"].casefold() == name.strip().casefold()), None)
+                if person is None:
+                    return []
+                response = await client.get(f"{self.base_url}/person/{person['id']}/combined_credits",
+                                            params=self._get_params(), headers=self._get_headers())
+                response.raise_for_status()
+                credits = response.json()
+            except Exception as exc:
+                logger.error("Person discovery failed: %s", type(exc).__name__)
+                return []
+        results = {}
+        for role in ("cast", "crew"):
+            for item in credits.get(role, []):
+                if item.get("media_type") != media_type or item.get("adult"):
+                    continue
+                if role == "crew" and item.get("job") not in ("Director", "Creator"):
+                    continue
+                date = item.get("release_date") or item.get("first_air_date") or ""
+                title = results.setdefault(item["id"], {
+                    "tmdb_id": item["id"], "media_type": media_type,
+                    "title": item.get("title") or item.get("name") or "Untitled",
+                    "release_year": int(date[:4]) if date[:4].isdigit() else None,
+                    "genres": [GENRE_MAP[g] for g in item.get("genre_ids", []) if g in GENRE_MAP],
+                    "overview": item.get("overview", ""), "poster_path": item.get("poster_path"),
+                    "popularity": item.get("popularity", 0), "vote_average": item.get("vote_average", 0),
+                    "cast_top": [], "director_or_creator": None,
+                })
+                if role == "cast":
+                    title["cast_top"] = [person["name"]]
+                else:
+                    title["director_or_creator"] = person["name"]
+        return sorted(results.values(), key=lambda t: t["popularity"], reverse=True)
+
     async def discover_titles(
         self,
         media_type: str = "movie",

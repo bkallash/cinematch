@@ -7,10 +7,12 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set
 import numpy as np
 from openai import AsyncOpenAI
+from pydantic import ValidationError
+from app.models.schemas import QueryIntent, ModelPick
 from app.config import settings
 from app.database import get_db, parse_utc_timestamp
 from app.services.embeddings import embedding_service
-from app.services.tmdb import tmdb_service
+from app.services.tmdb import tmdb_service, GENRE_MAP, GENRE_NAME_TO_ID
 from app.services.taste_dossier import taste_dossier_service
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,7 @@ class TasteVectorSignal:
     rating_rows: List[Any]
     ratings_count: int
     last_rated_at: Optional[str]
+    ratings_revision: int
 
 
 class OrchestratorService:
@@ -44,7 +47,9 @@ class OrchestratorService:
             api_key = settings.OPENROUTER_API_KEY or "dummy_key_for_init"
             self._client = AsyncOpenAI(
                 api_key=api_key,
-                base_url=settings.OPENROUTER_BASE_URL
+                base_url=settings.OPENROUTER_BASE_URL,
+                timeout=30.0,
+                max_retries=1,
             )
         return self._client
 
@@ -73,15 +78,24 @@ class OrchestratorService:
             history_rows = conn.execute("""
                 SELECT role, content FROM chat_messages
                 WHERE session_id = ?
-                ORDER BY created_at DESC LIMIT 6
+                ORDER BY id DESC LIMIT 7
             """, (session_id,)).fetchall()
-        chat_history = list(reversed([dict(r) for r in history_rows]))
+        # The newest row is the current request, already included in both prompts.
+        chat_history = list(reversed([dict(r) for r in history_rows[1:]]))
 
         # Step 1: Parse query intent and extract filters
-        intent = await self._parse_query_intent(query_text, media_type_preference)
+        intent, dossier = await asyncio.gather(
+            self._parse_query_intent(query_text, media_type_preference, chat_history),
+            taste_dossier_service.get_or_update_dossier(),
+        )
+        try:
+            query_vec = await embedding_service.get_embedding(intent["semantic_vibe"])
+        except Exception:
+            logger.exception("Query embedding failed; using filtered catalog order")
+            query_vec = np.zeros(settings.EMBEDDING_DIM, dtype=np.float32)
 
         # Step 2: Local vector search
-        candidates = await self._search_local_candidates(intent)
+        candidates = await self._search_local_candidates(intent, query_vec)
 
         # Step 3: Check candidate count and trigger dynamic TMDB discovery if needed
         if len(candidates) < 8 and settings.TMDB_API_KEY:
@@ -89,10 +103,7 @@ class OrchestratorService:
             discovered = await self._discover_and_cache_tmdb(intent)
             if discovered:
                 # Re-run search to include freshly embedded titles
-                candidates = await self._search_local_candidates(intent)
-
-        # Step 4: Retrieve Taste Dossier
-        dossier = await taste_dossier_service.get_or_update_dossier()
+                candidates = await self._search_local_candidates(intent, query_vec)
 
         # Step 5: Final Reranking & Justification with GPT-4o
         final_result = await self._rerank_and_justify(
@@ -116,7 +127,8 @@ class OrchestratorService:
             "session_id": session_id
         }
 
-    async def _parse_query_intent(self, query_text: str, media_type_pref: str) -> Dict[str, Any]:
+    async def _parse_query_intent(self, query_text: str, media_type_pref: str,
+                                chat_history: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """Extract semantic vibe and structured filters from the user's prompt."""
         if not settings.OPENROUTER_API_KEY:
             return {
@@ -135,6 +147,8 @@ Analyze the user's request and output a JSON object to guide vector search and d
 
 User Request: "{query_text}"
 Selected Media Type Filter: "{media_type_pref}"
+Recent conversation (context only; resolve follow-up references and retained constraints):
+{json.dumps(chat_history or [])}
 
 Return strictly a JSON object matching this schema:
 {{
@@ -156,7 +170,9 @@ Return strictly a JSON object matching this schema:
                 response_format={"type": "json_object"},
                 temperature=0.1
             )
-            parsed = json.loads(res.choices[0].message.content)
+            parsed = QueryIntent.model_validate_json(res.choices[0].message.content).model_dump()
+            if parsed["year_min"] and parsed["year_max"] and parsed["year_min"] > parsed["year_max"]:
+                raise ValueError("Invalid year range")
             if media_type_pref in ("movie", "tv"):
                 parsed["media_type"] = media_type_pref
             return parsed
@@ -171,14 +187,15 @@ Return strictly a JSON object matching this schema:
                 "year_max": None
             }
 
-    async def _search_local_candidates(self, intent: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _search_local_candidates(self, intent: Dict[str, Any], query_vec: Optional[np.ndarray] = None) -> List[Dict[str, Any]]:
         """Perform vector cosine similarity and SQL filtering over local unrated titles."""
         semantic_vibe = intent.get("semantic_vibe") or "great cinema"
-        query_vec = await embedding_service.get_embedding(semantic_vibe)
+        if query_vec is None:
+            query_vec = await embedding_service.get_embedding(semantic_vibe)
 
         # Query unrated titles from SQLite
         with get_db() as conn:
-            # Exclude already-rated titles and skipped titles
+            # A deck skip means unseen, so skipped titles remain eligible here.
             query = """
                 SELECT t.id, t.tmdb_id, t.media_type, t.title, t.release_year,
                        t.overview, t.poster_path, t.genres, t.director_or_creator,
@@ -187,11 +204,10 @@ Return strictly a JSON object matching this schema:
                        CASE WHEN w.id IS NOT NULL THEN 1 ELSE 0 END as is_on_watchlist
                 FROM titles t
                 LEFT JOIN ratings r ON t.id = r.title_id
-                LEFT JOIN skipped_titles s ON t.id = s.title_id
                 LEFT JOIN watchlist w ON t.id = w.title_id
-                WHERE r.id IS NULL AND s.id IS NULL AND t.embedding IS NOT NULL
+                WHERE r.id IS NULL AND t.embedding IS NOT NULL AND t.embedding_model = ?
             """
-            params: List[Any] = []
+            params: List[Any] = [embedding_service.model_key]
 
             if intent.get("media_type"):
                 query += " AND t.media_type = ?"
@@ -210,18 +226,21 @@ Return strictly a JSON object matching this schema:
         if not rows:
             return []
 
-        doc_ids = []
         doc_rows = []
         vec_list = []
 
         for r in rows:
+            if not self._matches_intent(dict(r), intent):
+                continue
             blob = r["embedding"]
             if not blob:
                 continue
-            v = embedding_service.bytes_to_vec(blob)
-            if v.shape[0] == query_vec.shape[0]:
+            try:
+                v = embedding_service.bytes_to_vec(blob)
+            except ValueError:
+                continue
+            if v.shape[0] == query_vec.shape[0] and np.isfinite(v).all():
                 vec_list.append(v)
-                doc_ids.append(r["id"])
                 doc_rows.append(r)
 
         if not vec_list:
@@ -256,6 +275,31 @@ Return strictly a JSON object matching this schema:
         candidates.sort(key=lambda x: x["similarity"], reverse=True)
         return candidates
 
+    @staticmethod
+    def _matches_intent(title: Dict[str, Any], intent: Dict[str, Any]) -> bool:
+        year = title.get("release_year")
+        if intent.get("year_min") and (year is None or year < intent["year_min"]):
+            return False
+        if intent.get("year_max") and (year is None or year > intent["year_max"]):
+            return False
+        def genre_name(name):
+            return GENRE_MAP.get(GENRE_NAME_TO_ID.get(name.casefold()), name).casefold()
+
+        genres = title.get("genres") or []
+        if isinstance(genres, str):
+            genres = json.loads(genres)
+        if not {genre_name(g) for g in intent.get("genres") or []}.issubset({genre_name(g) for g in genres}):
+            return False
+        person = (intent.get("person") or "").strip().casefold()
+        if person:
+            cast = title.get("cast_top") or []
+            if isinstance(cast, str):
+                cast = json.loads(cast)
+            people = [title.get("director_or_creator") or "", *cast]
+            if not any(person == name.strip().casefold() for name in people):
+                return False
+        return True
+
     async def _discover_and_cache_tmdb(self, intent: Dict[str, Any]) -> List[int]:
         """Fetch candidates from TMDB discover, compute embeddings, and insert into SQLite concurrently."""
         media_type = intent.get("media_type") or "movie"
@@ -263,12 +307,14 @@ Return strictly a JSON object matching this schema:
         year_min = intent.get("year_min")
         year_max = intent.get("year_max")
 
-        tmdb_items = await tmdb_service.discover_titles(
-            media_type=media_type,
-            year_min=year_min,
-            year_max=year_max,
-            limit=8
-        )
+        if intent.get("person"):
+            tmdb_items = await tmdb_service.find_person_titles(intent["person"], media_type)
+        else:
+            genre_ids = [str(GENRE_NAME_TO_ID[g.casefold()]) for g in genres if g.casefold() in GENRE_NAME_TO_ID]
+            tmdb_items = await tmdb_service.discover_titles(
+                media_type=media_type, with_genres=",".join(genre_ids) or None,
+                year_min=year_min, year_max=year_max, limit=20,
+            )
 
         if not tmdb_items:
             return []
@@ -279,9 +325,12 @@ Return strictly a JSON object matching this schema:
             async with sem:
                 try:
                     details = await tmdb_service.get_title_details(item["tmdb_id"], item["media_type"])
-                    full = details or item
-                    if not details:
-                        full = {**item, "director_or_creator": None, "cast_top": []}
+                    full = dict(details or item)
+                    if intent.get("person"):
+                        full = {**full, "cast_top": list(dict.fromkeys([*(full.get("cast_top") or []), *(item.get("cast_top") or [])]))}
+                        full["director_or_creator"] = full.get("director_or_creator") or item.get("director_or_creator")
+                    if not self._matches_intent(full, intent):
+                        return None
                     embed_text = embedding_service.build_title_embedding_text(full)
                     vec = await embedding_service.get_embedding(embed_text)
                     blob = embedding_service.vec_to_bytes(vec)
@@ -290,7 +339,14 @@ Return strictly a JSON object matching this schema:
                     logger.error(f"Error processing discovery item {item.get('title')}: {e}")
                     return None
 
-        results = await asyncio.gather(*(_fetch_and_embed(it) for it in tmdb_items[:8]))
+        with get_db() as conn:
+            existing = {(r["tmdb_id"], r["media_type"]) for r in conn.execute(
+                "SELECT tmdb_id, media_type, genres, release_year, cast_top, director_or_creator FROM titles WHERE embedding_model = ? AND embedding IS NOT NULL",
+                (embedding_service.model_key,),
+            ) if self._matches_intent(dict(r), intent)}
+        fresh = [item for item in tmdb_items if (item["tmdb_id"], item["media_type"]) not in existing
+                 and self._matches_intent(item, intent)]
+        results = await asyncio.gather(*(_fetch_and_embed(it) for it in fresh[:8]))
 
         inserted_ids = []
         with get_db() as conn:
@@ -299,13 +355,21 @@ Return strictly a JSON object matching this schema:
                     continue
                 full, blob, dim = res
                 try:
-                    cursor = conn.execute("""
-                        INSERT OR IGNORE INTO titles (
+                    conn.execute("""
+                        INSERT INTO titles (
                             tmdb_id, media_type, title, original_title, release_year,
                             overview, poster_path, backdrop_path, genres,
                             director_or_creator, cast_top, vote_average, vote_count,
-                            popularity, imdb_id, imdb_rating, embedding, embedding_dim
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            popularity, imdb_id, imdb_rating, embedding, embedding_dim, embedding_model
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(tmdb_id, media_type) DO UPDATE SET
+                            embedding = excluded.embedding,
+                            embedding_dim = excluded.embedding_dim,
+                            embedding_model = excluded.embedding_model,
+                            director_or_creator = excluded.director_or_creator,
+                            cast_top = excluded.cast_top,
+                            genres = excluded.genres,
+                            overview = excluded.overview
                     """, (
                         full["tmdb_id"], full["media_type"], full["title"],
                         full.get("original_title"), full.get("release_year"),
@@ -315,10 +379,11 @@ Return strictly a JSON object matching this schema:
                         full.get("vote_average", 0.0), full.get("vote_count", 0),
                         full.get("popularity", 0.0), full.get("imdb_id"),
                         full.get("imdb_rating") or full.get("vote_average", 0.0),
-                        blob, dim
+                        blob, dim, embedding_service.model_key
                     ))
-                    if cursor.lastrowid:
-                        inserted_ids.append(cursor.lastrowid)
+                    row = conn.execute("SELECT id FROM titles WHERE tmdb_id = ? AND media_type = ?",
+                                       (full["tmdb_id"], full["media_type"])).fetchone()
+                    inserted_ids.append(row["id"])
                 except Exception as e:
                     logger.error(f"Error inserting discovery title {full.get('title')}: {e}")
 
@@ -327,6 +392,7 @@ Return strictly a JSON object matching this schema:
     def _build_taste_vector_and_stats(
         self,
         exclude_rating_ids: Optional[Set[int]] = None,
+        exclude_title_ids: Optional[Set[int]] = None,
     ) -> TasteVectorSignal:
         """Builds a recency-weighted, dual-window blended taste vector and aggregate stats.
 
@@ -340,11 +406,13 @@ Return strictly a JSON object matching this schema:
         now = datetime.now(timezone.utc)
 
         with get_db() as conn:
+            conn.execute("BEGIN")
+            ratings_revision = conn.execute("SELECT revision FROM ratings_state WHERE id = 1").fetchone()[0]
             query = """
                 SELECT r.id as rating_id, r.score, r.aspect_tags, r.notes,
                        r.created_at, r.updated_at,
                        t.id, t.title, t.media_type, t.release_year, t.genres,
-                       t.director_or_creator, t.embedding, t.vote_average, t.imdb_rating
+                       t.director_or_creator, t.embedding, t.embedding_model, t.vote_average, t.imdb_rating
                 FROM ratings r
                 JOIN titles t ON r.title_id = t.id
                 ORDER BY COALESCE(r.updated_at, r.created_at) DESC
@@ -353,6 +421,8 @@ Return strictly a JSON object matching this schema:
 
         if exclude_rating_ids:
             rating_rows = [r for r in rating_rows if r["rating_id"] not in exclude_rating_ids]
+        if exclude_title_ids:
+            rating_rows = [r for r in rating_rows if r["id"] not in exclude_title_ids]
 
         liked_genres: Dict[str, int] = {}
         liked_creators: Dict[str, int] = {}
@@ -383,10 +453,12 @@ Return strictly a JSON object matching this schema:
                 loved_titles.append(r)
 
             blob = r["embedding"]
-            if not blob:
+            if not blob or r["embedding_model"] != embedding_service.model_key:
                 continue
             try:
                 vec = embedding_service.bytes_to_vec(blob)
+                if vec.shape != (settings.EMBEDDING_DIM,) or not np.isfinite(vec).all():
+                    continue
             except Exception:
                 continue
 
@@ -445,7 +517,28 @@ Return strictly a JSON object matching this schema:
             rating_rows=rating_rows,
             ratings_count=len(rating_rows),
             last_rated_at=last_rated_at,
+            ratings_revision=ratings_revision,
         )
+
+    def _build_taste_profile(
+        self,
+        user_id: str = "default_user",
+        exclude_title_ids: Optional[Set[int]] = None,
+    ) -> Dict[str, Any]:
+        """Compatibility wrapper for callers that consume a mapping profile."""
+        del user_id  # Ratings are currently stored in a single-user table.
+        signal = self._build_taste_vector_and_stats(exclude_title_ids=exclude_title_ids)
+        return {
+            "taste_vector": signal.taste_vector,
+            "liked_genres": signal.liked_genres,
+            "liked_creators": signal.liked_creators,
+            "liked_count": signal.liked_count,
+            "loved_titles": signal.loved_titles,
+            "rating_rows": signal.rating_rows,
+            "ratings_count": signal.ratings_count,
+            "last_rated_at": signal.last_rated_at,
+            "ratings_revision": signal.ratings_revision,
+        }
 
     async def get_personalized_picks(
         self,
@@ -469,17 +562,18 @@ Return strictly a JSON object matching this schema:
         5. Persist the generated shelf into for_you_cache along with ratings_count and last_rated_at.
         """
         limit = max(1, min(limit, 10))
-        normalized_media = media_type_preference if media_type_preference in ("movie", "tv") else "movie"
+        normalized_media = media_type_preference if media_type_preference in ("movie", "tv") else "all"
         media_filter = media_type_preference if media_type_preference in ("movie", "tv") else None
 
         if not force_refresh:
             with get_db() as conn:
                 cached_row = conn.execute("""
-                    SELECT picks_json, message, personalized, ratings_count, last_rated_at
+                    SELECT picks_json, message, personalized, ratings_count, last_rated_at, ratings_revision
                     FROM for_you_cache
                     WHERE user_id = ? AND media_type = ?
                 """, (user_id, normalized_media)).fetchone()
                 current_ratings_count = conn.execute("SELECT COUNT(*) FROM ratings").fetchone()[0]
+                current_revision = conn.execute("SELECT revision FROM ratings_state WHERE id = 1").fetchone()[0]
                 current_last_rated_at = conn.execute(
                     "SELECT MAX(COALESCE(updated_at, created_at)) FROM ratings"
                 ).fetchone()[0]
@@ -497,6 +591,7 @@ Return strictly a JSON object matching this schema:
                     (not was_personalized and current_ratings_count > 0)
                     or (cached_count != current_ratings_count)
                     or (cached_last_rated != current_last_rated_at)
+                    or (cached_row["ratings_revision"] != current_revision)
                 )
 
                 if not should_auto_refresh:
@@ -514,7 +609,7 @@ Return strictly a JSON object matching this schema:
                     ):
                         should_auto_refresh = True
 
-                    if not should_auto_refresh and cached_picks:
+                    if not should_auto_refresh and cached_picks and len(cached_picks) >= limit:
                         title_ids = [p["title_id"] for p in cached_picks if isinstance(p, dict) and "title_id" in p]
                         with get_db() as conn:
                             if title_ids:
@@ -556,6 +651,7 @@ Return strictly a JSON object matching this schema:
         liked_creators = signal.liked_creators
         taste_vec = signal.taste_vector
         last_rated_at = signal.last_rated_at
+        ratings_revision = signal.ratings_revision
 
         dossier = await taste_dossier_service.get_or_update_dossier(user_id=user_id)
 
@@ -566,7 +662,7 @@ Return strictly a JSON object matching this schema:
                 "Rate a few Titles and I'll tailor this shelf to you. "
                 "Showing popular crowd-pleasers for now."
             )
-            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, 0, None)
+            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, 0, None, ratings_revision)
             return {
                 "picks": fallback,
                 "dossier": dossier,
@@ -579,7 +675,7 @@ Return strictly a JSON object matching this schema:
         if taste_vec is None:
             fallback = await self._popular_unrated_fallback(limit, media_filter)
             message = "Couldn't build a taste signal from your Ratings yet — showing popular Titles."
-            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, ratings_count, last_rated_at)
+            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, ratings_count, last_rated_at, ratings_revision)
             return {
                 "picks": fallback,
                 "dossier": dossier,
@@ -600,9 +696,9 @@ Return strictly a JSON object matching this schema:
                 FROM titles t
                 LEFT JOIN ratings r ON t.id = r.title_id
                 LEFT JOIN watchlist w ON t.id = w.title_id
-                WHERE r.id IS NULL AND t.embedding IS NOT NULL
+                WHERE r.id IS NULL AND t.embedding IS NOT NULL AND t.embedding_model = ?
             """
-            params: List[Any] = []
+            params: List[Any] = [embedding_service.model_key]
             if media_filter:
                 query += " AND t.media_type = ?"
                 params.append(media_filter)
@@ -617,7 +713,7 @@ Return strictly a JSON object matching this schema:
                 v = embedding_service.bytes_to_vec(blob)
             except Exception:
                 continue
-            if v.shape[0] != taste_vec.shape[0]:
+            if v.shape[0] != taste_vec.shape[0] or not np.isfinite(v).all():
                 continue
             sim = float(np.dot(v, taste_vec))
             # Small quality prior so ties break toward well-regarded Titles,
@@ -725,7 +821,7 @@ Return strictly a JSON object matching this schema:
         else:
             message = f"Based on your {ratings_count} Ratings — top {len(picks)} picks from your Dossier."
 
-        self._save_for_you_cache(user_id, normalized_media, picks, message, True, ratings_count, last_rated_at)
+        self._save_for_you_cache(user_id, normalized_media, picks, message, True, ratings_count, last_rated_at, ratings_revision)
 
         return {
             "picks": picks,
@@ -745,6 +841,7 @@ Return strictly a JSON object matching this schema:
         personalized: bool,
         ratings_count: int,
         last_rated_at: Optional[str] = None,
+        ratings_revision: int = -1,
     ) -> None:
         """Persist generated for-you recommendation shelf to SQLite cache."""
         try:
@@ -752,15 +849,16 @@ Return strictly a JSON object matching this schema:
                 conn.execute("""
                     INSERT INTO for_you_cache (
                         user_id, media_type, picks_json, message, personalized,
-                        ratings_count, last_rated_at, updated_at
+                        ratings_count, last_rated_at, ratings_revision, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(user_id, media_type) DO UPDATE SET
                         picks_json = excluded.picks_json,
                         message = excluded.message,
                         personalized = excluded.personalized,
                         ratings_count = excluded.ratings_count,
                         last_rated_at = excluded.last_rated_at,
+                        ratings_revision = excluded.ratings_revision,
                         updated_at = CURRENT_TIMESTAMP
                 """, (
                     user_id,
@@ -770,6 +868,7 @@ Return strictly a JSON object matching this schema:
                     1 if personalized else 0,
                     ratings_count,
                     last_rated_at,
+                    ratings_revision,
                 ))
         except Exception as e:
             logger.error(f"Failed to cache for-you picks: {e}")
@@ -983,6 +1082,7 @@ Core Loves: {json.dumps(dossier.get('core_loves', []))}
 Deal Breakers: {json.dumps(dossier.get('deal_breakers', []))}
 Creator Affinities: {json.dumps(dossier.get('creator_affinities', []))}
 Atmospheric Preferences: {json.dumps(dossier.get('atmospheric_preferences', []))}
+Narrative Tropes: {json.dumps(dossier.get('narrative_tropes', []))}
 Taste Summary: {dossier.get('full_summary', 'N/A')}
 
 ### User's Top Rated Favorites:
@@ -1021,9 +1121,11 @@ Respond ONLY in valid JSON matching this schema:
             data = json.loads(res.choices[0].message.content)
             by_id = {c["title_id"]: c for c in shortlist}
             picks = []
-            for entry in data.get("picks", [])[:limit]:
+            seen = set()
+            for entry in self._valid_picks(data.get("picks", [])):
                 tid = entry.get("title_id")
-                if tid in by_id:
+                if tid in by_id and tid not in seen:
+                    seen.add(tid)
                     reason = str(entry.get("reason", "")).strip()
                     # If reason is too short, generic, or contains vector jargon, generate a proper one
                     if (
@@ -1037,6 +1139,8 @@ Respond ONLY in valid JSON matching this schema:
                             by_id[tid], liked_genres, liked_creators, loved_titles, dossier
                         )
                     picks.append({**by_id[tid], "reason": reason})
+                    if len(picks) >= limit:
+                        break
 
             # Fill short if the model returned fewer than requested.
             if len(picks) < limit:
@@ -1062,6 +1166,18 @@ Respond ONLY in valid JSON matching this schema:
             return self._heuristic_personalized_reasons(
                 shortlist[:limit], liked_genres or {}, liked_creators or {}, loved_titles=loved_titles, dossier=dossier
             )
+
+    @staticmethod
+    def _valid_picks(entries):
+        if not isinstance(entries, list):
+            return []
+        valid = []
+        for entry in entries:
+            try:
+                valid.append(ModelPick.model_validate(entry).model_dump())
+            except ValidationError:
+                continue
+        return valid
 
     async def _rerank_and_justify(
         self,
@@ -1122,11 +1238,15 @@ The user is asking for movie or series recommendations.
 ### User Request:
 "{query_text}"
 
+### Recent conversation (context only):
+{json.dumps(chat_history)}
+
 ### User's Taste Dossier:
 Core Loves: {json.dumps(dossier.get('core_loves', []))}
 Deal Breakers: {json.dumps(dossier.get('deal_breakers', []))}
 Creator Affinities: {json.dumps(dossier.get('creator_affinities', []))}
 Atmospheric Preferences: {json.dumps(dossier.get('atmospheric_preferences', []))}
+Narrative Tropes: {json.dumps(dossier.get('narrative_tropes', []))}
 Taste Summary: {dossier.get('full_summary', 'N/A')}
 
 ### Candidate Titles Retrieved:
@@ -1164,9 +1284,11 @@ Respond ONLY in valid JSON matching this schema:
             cand_by_id = {c["title_id"]: c for c in candidates}
 
             formatted_recs = []
-            for r in data.get("recommendations", []):
+            seen = set()
+            for r in self._valid_picks(data.get("recommendations", [])):
                 tid = r.get("title_id")
-                if tid in cand_by_id:
+                if tid in cand_by_id and tid not in seen:
+                    seen.add(tid)
                     cand = cand_by_id[tid]
                     reason = str(r.get("reason", "")).strip()
                     if (
@@ -1191,9 +1313,18 @@ Respond ONLY in valid JSON matching this schema:
                         "imdb_rating": cand.get("imdb_rating") or cand.get("vote_average", 0.0),
                         "imdb_id": cand.get("imdb_id"),
                     })
+                    if len(formatted_recs) >= 5:
+                        break
+
+            for cand in candidates:
+                if len(formatted_recs) >= min(3, len(candidates)):
+                    break
+                if cand["title_id"] not in seen:
+                    seen.add(cand["title_id"])
+                    formatted_recs.append({**cand, "reason": self._generate_personalized_reason(cand, dossier=dossier)})
 
             return {
-                "assistant_message": data.get("assistant_message", "Here are my top recommendations for you tonight:"),
+                "assistant_message": data.get("assistant_message") if isinstance(data.get("assistant_message"), str) else "Here are my top recommendations for you tonight:",
                 "recommendations": formatted_recs
             }
         except Exception as e:
@@ -1240,8 +1371,8 @@ Respond ONLY in valid JSON matching this schema:
                 LEFT JOIN skipped_titles s ON t.id = s.title_id
                 LEFT JOIN watchlist w ON t.id = w.title_id
                 WHERE r.id IS NULL AND s.id IS NULL AND w.id IS NULL
-                  AND t.embedding IS NOT NULL
-            """).fetchall()
+                  AND t.embedding IS NOT NULL AND t.embedding_model = ?
+            """, (embedding_service.model_key,)).fetchall()
 
         if exclude_ids:
             rows = [r for r in rows if r["id"] not in exclude_ids]
@@ -1257,7 +1388,7 @@ Respond ONLY in valid JSON matching this schema:
                 continue
             try:
                 v = embedding_service.bytes_to_vec(blob)
-                if v.shape[0] == taste_vec.shape[0]:
+                if v.shape[0] == taste_vec.shape[0] and np.isfinite(v).all():
                     vec_list.append(v)
                     valid_rows.append(r)
             except Exception:
@@ -1274,20 +1405,25 @@ Respond ONLY in valid JSON matching this schema:
             r = valid_rows[i]
             sim = float(raw_sim)
             quality = min((r["vote_average"] or 0.0) / 10.0, 1.0) * 0.05
-            eff_score = sim + quality
-            scored.append((eff_score, sim, r))
+            row_genres = json.loads(r["genres"] or "[]")
+            genre_matches = [genre for genre in row_genres if genre in liked_genres]
+            creator_match = bool(
+                r["director_or_creator"] and r["director_or_creator"] in liked_creators
+            )
+            affinity = min(len(genre_matches) * 0.15, 0.3) + (0.25 if creator_match else 0.0)
+            eff_score = sim + quality + affinity
+            scored.append((eff_score, sim, r, genre_matches, creator_match))
 
         scored.sort(key=lambda x: x[0], reverse=True)
-        best_eff, best_sim, best_row = scored[0]
+        best_eff, best_sim, best_row, matching_genres, creator_match = scored[0]
 
-        if best_sim < 0.35:
+        if best_sim < 0.35 and not matching_genres and not creator_match:
             return None
 
         genres = json.loads(best_row["genres"] or "[]")
         director = best_row["director_or_creator"]
 
-        matching_genres = [g for g in genres if g in liked_genres]
-        if director and director in liked_creators:
+        if creator_match:
             reason = f"Matches your affinity for {director}"
         elif matching_genres:
             reason = f"Matches your taste in {' & '.join(matching_genres[:2])}"
