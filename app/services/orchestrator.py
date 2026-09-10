@@ -2,16 +2,38 @@ import asyncio
 import json
 import logging
 import random
-from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Dict, Any, List, Optional, Set
 import numpy as np
 from openai import AsyncOpenAI
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, parse_utc_timestamp
 from app.services.embeddings import embedding_service
 from app.services.tmdb import tmdb_service
 from app.services.taste_dossier import taste_dossier_service
 
 logger = logging.getLogger(__name__)
+
+# Adaptive taste drift constants (per Spec 0001)
+HALF_LIFE_DAYS: float = 180.0
+RECENCY_FLOOR: float = 0.25
+RECENT_WINDOW_SIZE: int = 10
+LONG_TERM_WEIGHT: float = 0.7
+RECENT_WEIGHT: float = 0.3
+
+
+@dataclass
+class TasteVectorSignal:
+    taste_vector: Optional[np.ndarray]
+    liked_genres: Dict[str, int]
+    liked_creators: Dict[str, int]
+    liked_count: int
+    loved_titles: List[Any]
+    rating_rows: List[Any]
+    ratings_count: int
+    last_rated_at: Optional[str]
+
 
 class OrchestratorService:
     def __init__(self):
@@ -302,6 +324,129 @@ Return strictly a JSON object matching this schema:
 
         return inserted_ids
 
+    def _build_taste_vector_and_stats(
+        self,
+        exclude_rating_ids: Optional[Set[int]] = None,
+    ) -> TasteVectorSignal:
+        """Builds a recency-weighted, dual-window blended taste vector and aggregate stats.
+
+        Blends:
+        1. Long-term vector: all ratings, weighted by score_weight * recency_factor
+           (exponential decay with half-life of HALF_LIFE_DAYS, floored at RECENCY_FLOOR).
+        2. Recent window vector: most recent RECENT_WINDOW_SIZE ratings, un-decayed.
+        Final vector = normalize(0.7 * long_term + 0.3 * recent).
+        """
+        score_weights = {6: 2.0, 5: 1.5, 4: 1.0, 3: -0.2, 2: -1.0, 1: -1.5}
+        now = datetime.now(timezone.utc)
+
+        with get_db() as conn:
+            query = """
+                SELECT r.id as rating_id, r.score, r.aspect_tags, r.notes,
+                       r.created_at, r.updated_at,
+                       t.id, t.title, t.media_type, t.release_year, t.genres,
+                       t.director_or_creator, t.embedding, t.vote_average, t.imdb_rating
+                FROM ratings r
+                JOIN titles t ON r.title_id = t.id
+                ORDER BY COALESCE(r.updated_at, r.created_at) DESC
+            """
+            rating_rows = conn.execute(query).fetchall()
+
+        if exclude_rating_ids:
+            rating_rows = [r for r in rating_rows if r["rating_id"] not in exclude_rating_ids]
+
+        liked_genres: Dict[str, int] = {}
+        liked_creators: Dict[str, int] = {}
+        liked_count = 0
+        loved_titles: List[Any] = []
+        last_rated_at: Optional[str] = None
+
+        long_term_vecs = []
+        recent_candidates = []
+
+        for r in rating_rows:
+            ts = r["updated_at"] or r["created_at"]
+            if ts and (last_rated_at is None or str(ts) > str(last_rated_at)):
+                last_rated_at = str(ts)
+
+            score_val = int(r["score"] or 0)
+            if score_val >= 4:
+                liked_count += 1
+                try:
+                    for g in json.loads(r["genres"] or "[]"):
+                        liked_genres[g] = liked_genres.get(g, 0) + 1
+                except Exception:
+                    pass
+                if r["director_or_creator"]:
+                    liked_creators[r["director_or_creator"]] = liked_creators.get(r["director_or_creator"], 0) + 1
+
+            if score_val >= 5:
+                loved_titles.append(r)
+
+            blob = r["embedding"]
+            if not blob:
+                continue
+            try:
+                vec = embedding_service.bytes_to_vec(blob)
+            except Exception:
+                continue
+
+            base_w = score_weights.get(score_val, 0.0)
+            if base_w == 0:
+                continue
+
+            # Recency decay for long-term vector
+            dt = parse_utc_timestamp(ts)
+            if dt is None:
+                recency_factor = RECENCY_FLOOR
+            else:
+                age_days = max(0.0, (now - dt).total_seconds() / 86400.0)
+                decay = 0.5 ** (age_days / HALF_LIFE_DAYS)
+                recency_factor = max(decay, RECENCY_FLOOR)
+
+            long_term_vecs.append(vec * (base_w * recency_factor))
+            recent_candidates.append((vec, base_w))
+
+        # 1. Compute long-term vector
+        long_term_vec: Optional[np.ndarray] = None
+        if long_term_vecs:
+            sum_long = np.sum(np.vstack(long_term_vecs), axis=0).astype(np.float32)
+            norm_long = np.linalg.norm(sum_long)
+            if norm_long > 0:
+                long_term_vec = sum_long / norm_long
+
+        # 2. Compute recent window vector (top RECENT_WINDOW_SIZE, un-decayed)
+        recent_window = recent_candidates[:RECENT_WINDOW_SIZE]
+        recent_vec: Optional[np.ndarray] = None
+        if recent_window:
+            recent_vecs = [v * w for v, w in recent_window]
+            sum_recent = np.sum(np.vstack(recent_vecs), axis=0).astype(np.float32)
+            norm_recent = np.linalg.norm(sum_recent)
+            if norm_recent > 0:
+                recent_vec = sum_recent / norm_recent
+
+        # 3. Blend vectors
+        if long_term_vec is None and recent_vec is None:
+            final_vec = None
+        elif recent_vec is None:
+            final_vec = long_term_vec
+        elif long_term_vec is None:
+            final_vec = recent_vec
+        else:
+            blended = (LONG_TERM_WEIGHT * long_term_vec + RECENT_WEIGHT * recent_vec).astype(np.float32)
+            norm_b = np.linalg.norm(blended)
+            final_vec = (blended / norm_b).astype(np.float32) if norm_b > 0 else long_term_vec
+
+        return TasteVectorSignal(
+            taste_vector=final_vec,
+            liked_genres=liked_genres,
+            liked_creators=liked_creators,
+            liked_count=liked_count,
+            loved_titles=loved_titles,
+            rating_rows=rating_rows,
+            ratings_count=len(rating_rows),
+            last_rated_at=last_rated_at,
+        )
+
     async def get_personalized_picks(
         self,
         limit: int = 5,
@@ -312,15 +457,16 @@ Return strictly a JSON object matching this schema:
         """Suggest `limit` Titles most likely to be liked, grounded in Ratings + Taste Dossier.
 
         Pipeline:
-        1. Check for_you_cache; if cached picks exist and force_refresh is False,
-           re-hydrate dynamic user state (watchlist, ratings) and return immediately.
-        2. Load all Ratings with Title embeddings; build a weighted taste vector
-           (6=+2.0, 5=+1.5, 4=+1.0, 3=-0.2, 2=-1.0, 1=-1.5).
+        1. Check for_you_cache; if cached picks exist, force_refresh is False, and ratings
+           have not changed (count and last_rated_at match), re-hydrate dynamic user state
+           (watchlist, ratings) and return immediately.
+        2. If dirty or refreshed, build blended taste vector via `_build_taste_vector_and_stats`
+           combining exponential decay on long-term ratings and recent window ratings.
         3. Vector-search unrated Titles (rated Titles excluded; skipped Titles
            included since Deck skip means "haven't seen", not "disliked").
         4. Rerank top candidates against the Taste Dossier via GPT-4o when
            configured, otherwise use a deterministic similarity + quality blend.
-        5. Persist the generated shelf into for_you_cache.
+        5. Persist the generated shelf into for_you_cache along with ratings_count and last_rated_at.
         """
         limit = max(1, min(limit, 10))
         normalized_media = media_type_preference if media_type_preference in ("movie", "tv") else "movie"
@@ -329,16 +475,30 @@ Return strictly a JSON object matching this schema:
         if not force_refresh:
             with get_db() as conn:
                 cached_row = conn.execute("""
-                    SELECT picks_json, message, personalized, ratings_count
+                    SELECT picks_json, message, personalized, ratings_count, last_rated_at
                     FROM for_you_cache
                     WHERE user_id = ? AND media_type = ?
                 """, (user_id, normalized_media)).fetchone()
                 current_ratings_count = conn.execute("SELECT COUNT(*) FROM ratings").fetchone()[0]
+                current_last_rated_at = conn.execute(
+                    "SELECT MAX(COALESCE(updated_at, created_at)) FROM ratings"
+                ).fetchone()[0]
 
             if cached_row:
                 was_personalized = bool(cached_row["personalized"])
-                # Auto-refresh only if previously cold-start and user now has rated at least one Title
-                should_auto_refresh = (not was_personalized and current_ratings_count > 0)
+                cached_count = cached_row["ratings_count"] if cached_row["ratings_count"] is not None else 0
+                cached_last_rated = cached_row["last_rated_at"]
+
+                # Auto-refresh if:
+                # 1. Previously cold-start and user now has rated at least one Title
+                # 2. Ratings count changed (new rating or deletion)
+                # 3. Maximum rating timestamp changed (new rating or re-rating)
+                should_auto_refresh = (
+                    (not was_personalized and current_ratings_count > 0)
+                    or (cached_count != current_ratings_count)
+                    or (cached_last_rated != current_last_rated_at)
+                )
+
                 if not should_auto_refresh:
                     try:
                         cached_picks = json.loads(cached_row["picks_json"] or "[]")
@@ -388,15 +548,14 @@ Return strictly a JSON object matching this schema:
                             "personalized": was_personalized,
                         }
 
-        with get_db() as conn:
-            rating_rows = conn.execute("""
-                SELECT r.score, r.aspect_tags, t.id, t.title, t.media_type,
-                       t.release_year, t.genres, t.director_or_creator, t.embedding,
-                       t.vote_average, t.imdb_rating
-                FROM ratings r
-                JOIN titles t ON r.title_id = t.id
-            """).fetchall()
-            ratings_count = conn.execute("SELECT COUNT(*) FROM ratings").fetchone()[0]
+        signal = self._build_taste_vector_and_stats()
+        rating_rows = signal.rating_rows
+        ratings_count = signal.ratings_count
+        liked_count = signal.liked_count
+        liked_genres = signal.liked_genres
+        liked_creators = signal.liked_creators
+        taste_vec = signal.taste_vector
+        last_rated_at = signal.last_rated_at
 
         dossier = await taste_dossier_service.get_or_update_dossier(user_id=user_id)
 
@@ -407,7 +566,7 @@ Return strictly a JSON object matching this schema:
                 "Rate a few Titles and I'll tailor this shelf to you. "
                 "Showing popular crowd-pleasers for now."
             )
-            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, 0)
+            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, 0, None)
             return {
                 "picks": fallback,
                 "dossier": dossier,
@@ -417,38 +576,10 @@ Return strictly a JSON object matching this schema:
                 "personalized": False,
             }
 
-        # --- 1. Build weighted taste vector from rated Title embeddings ---
-        score_weights = {6: 2.0, 5: 1.5, 4: 1.0, 3: -0.2, 2: -1.0, 1: -1.5}
-        weighted_vecs = []
-        liked_genres: Dict[str, int] = {}
-        liked_creators: Dict[str, int] = {}
-        liked_count = 0
-        for r in rating_rows:
-            blob = r["embedding"]
-            if not blob:
-                continue
-            try:
-                vec = embedding_service.bytes_to_vec(blob)
-            except Exception:
-                continue
-            w = score_weights.get(int(r["score"] or 3), 0.0)
-            if w == 0:
-                continue
-            weighted_vecs.append(vec * w)
-            if int(r["score"] or 0) >= 4:
-                liked_count += 1
-                try:
-                    for g in json.loads(r["genres"] or "[]"):
-                        liked_genres[g] = liked_genres.get(g, 0) + 1
-                except Exception:
-                    pass
-                if r["director_or_creator"]:
-                    liked_creators[r["director_or_creator"]] = liked_creators.get(r["director_or_creator"], 0) + 1
-
-        if not weighted_vecs:
+        if taste_vec is None:
             fallback = await self._popular_unrated_fallback(limit, media_filter)
             message = "Couldn't build a taste signal from your Ratings yet — showing popular Titles."
-            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, ratings_count)
+            self._save_for_you_cache(user_id, normalized_media, fallback, message, False, ratings_count, last_rated_at)
             return {
                 "picks": fallback,
                 "dossier": dossier,
@@ -457,11 +588,6 @@ Return strictly a JSON object matching this schema:
                 "message": message,
                 "personalized": False,
             }
-
-        taste_vec = np.sum(np.vstack(weighted_vecs), axis=0).astype(np.float32)
-        norm = np.linalg.norm(taste_vec)
-        if norm > 0:
-            taste_vec = taste_vec / norm
 
         # --- 2. Score unrated Titles against the taste vector ---
         with get_db() as conn:
@@ -535,15 +661,12 @@ Return strictly a JSON object matching this schema:
 
         # Select loved titles matching the requested media type first
         media_loved = [
-            r for r in rating_rows
-            if r["media_type"] == normalized_media and int(r["score"] or 0) >= 5
+            r for r in signal.loved_titles
+            if r["media_type"] == normalized_media
         ]
         if not media_loved:
             # Fall back to loved titles from any media type if none exist for this type
-            media_loved = [
-                r for r in rating_rows
-                if int(r["score"] or 0) >= 5
-            ]
+            media_loved = signal.loved_titles
 
         # --- 3. Rerank against the Taste Dossier (LLM when available) ---
         if settings.OPENROUTER_API_KEY:
@@ -602,7 +725,7 @@ Return strictly a JSON object matching this schema:
         else:
             message = f"Based on your {ratings_count} Ratings — top {len(picks)} picks from your Dossier."
 
-        self._save_for_you_cache(user_id, normalized_media, picks, message, True, ratings_count)
+        self._save_for_you_cache(user_id, normalized_media, picks, message, True, ratings_count, last_rated_at)
 
         return {
             "picks": picks,
@@ -621,18 +744,23 @@ Return strictly a JSON object matching this schema:
         message: str,
         personalized: bool,
         ratings_count: int,
+        last_rated_at: Optional[str] = None,
     ) -> None:
         """Persist generated for-you recommendation shelf to SQLite cache."""
         try:
             with get_db() as conn:
                 conn.execute("""
-                    INSERT INTO for_you_cache (user_id, media_type, picks_json, message, personalized, ratings_count, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO for_you_cache (
+                        user_id, media_type, picks_json, message, personalized,
+                        ratings_count, last_rated_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(user_id, media_type) DO UPDATE SET
                         picks_json = excluded.picks_json,
                         message = excluded.message,
                         personalized = excluded.personalized,
                         ratings_count = excluded.ratings_count,
+                        last_rated_at = excluded.last_rated_at,
                         updated_at = CURRENT_TIMESTAMP
                 """, (
                     user_id,
@@ -641,6 +769,7 @@ Return strictly a JSON object matching this schema:
                     message,
                     1 if personalized else 0,
                     ratings_count,
+                    last_rated_at,
                 ))
         except Exception as e:
             logger.error(f"Failed to cache for-you picks: {e}")
@@ -1092,49 +1221,16 @@ Respond ONLY in valid JSON matching this schema:
 
     async def get_deck_suggestion(self, exclude_ids: Optional[set] = None) -> Optional[Dict[str, Any]]:
         """Returns a single top unseen candidate personalized to the user's taste."""
-        with get_db() as conn:
-            rating_rows = conn.execute("""
-                SELECT r.score, r.aspect_tags, t.id, t.title, t.genres, t.director_or_creator, t.embedding
-                FROM ratings r
-                JOIN titles t ON r.title_id = t.id
-            """).fetchall()
-
-        if len(rating_rows) < 2:
+        signal = self._build_taste_vector_and_stats()
+        if signal.ratings_count < 2:
             return None
 
-        score_weights = {6: 2.0, 5: 1.5, 4: 1.0, 3: -0.2, 2: -1.0, 1: -1.5}
-        weighted_vecs = []
-        liked_genres: Dict[str, int] = {}
-        liked_creators: Dict[str, int] = {}
-
-        for r in rating_rows:
-            blob = r["embedding"]
-            if not blob:
-                continue
-            try:
-                vec = embedding_service.bytes_to_vec(blob)
-            except Exception:
-                continue
-            w = score_weights.get(int(r["score"] or 3), 0.0)
-            if w == 0:
-                continue
-            weighted_vecs.append(vec * w)
-            if int(r["score"] or 0) >= 4:
-                try:
-                    for g in json.loads(r["genres"] or "[]"):
-                        liked_genres[g] = liked_genres.get(g, 0) + 1
-                except Exception:
-                    pass
-                if r["director_or_creator"]:
-                    liked_creators[r["director_or_creator"]] = liked_creators.get(r["director_or_creator"], 0) + 1
-
-        if not weighted_vecs:
+        taste_vec = signal.taste_vector
+        if taste_vec is None:
             return None
 
-        taste_vec = np.sum(np.vstack(weighted_vecs), axis=0).astype(np.float32)
-        norm = np.linalg.norm(taste_vec)
-        if norm > 0:
-            taste_vec = taste_vec / norm
+        liked_genres = signal.liked_genres
+        liked_creators = signal.liked_creators
 
         with get_db() as conn:
             rows = conn.execute("""
@@ -1196,18 +1292,7 @@ Respond ONLY in valid JSON matching this schema:
         elif matching_genres:
             reason = f"Matches your taste in {' & '.join(matching_genres[:2])}"
         else:
-            reason = self._generate_personalized_reason(
-                {
-                    "title": best_row["title"],
-                    "genres": genres,
-                    "director": director,
-                    "vote_average": best_row["vote_average"],
-                    "release_year": best_row["release_year"],
-                    "overview": best_row["overview"],
-                },
-                liked_genres=liked_genres,
-                liked_creators=liked_creators,
-            )
+            reason = f"Tailored to your taste, offering a compelling {genres[0] if genres else 'film'} experience."
 
         match_score = min(98, max(75, int(best_sim * 100)))
 

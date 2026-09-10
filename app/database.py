@@ -1,11 +1,28 @@
 import sqlite3
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+def parse_utc_timestamp(ts: Any) -> Optional[datetime]:
+    """Safely parse SQLite or ISO timestamp string to timezone-aware UTC datetime."""
+    if not ts:
+        return None
+    if isinstance(ts, datetime):
+        if ts.tzinfo is None:
+            return ts.replace(tzinfo=timezone.utc)
+        return ts
+    try:
+        dt = datetime.fromisoformat(str(ts).strip().replace(" ", "T"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        return None
 
 def get_db_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(settings.DATABASE_PATH, timeout=20.0)
@@ -131,6 +148,7 @@ def init_db():
             message TEXT NOT NULL DEFAULT '',
             personalized INTEGER NOT NULL DEFAULT 1,
             ratings_count INTEGER NOT NULL DEFAULT 0,
+            last_rated_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, media_type)
@@ -156,5 +174,10 @@ def init_db():
             conn.execute("ALTER TABLE titles ADD COLUMN imdb_id TEXT")
         if "imdb_rating" not in existing_cols:
             conn.execute("ALTER TABLE titles ADD COLUMN imdb_rating REAL")
+
+        # Safely migrate for_you_cache table for existing databases
+        existing_cache_cols = [c[1] for c in conn.execute("PRAGMA table_info(for_you_cache)").fetchall()]
+        if "last_rated_at" not in existing_cache_cols:
+            conn.execute("ALTER TABLE for_you_cache ADD COLUMN last_rated_at TIMESTAMP")
 
         logger.info("Database initialized successfully.")

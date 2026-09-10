@@ -6,7 +6,7 @@ from app.services.orchestrator import orchestrator_service
 from app.main import app
 
 
-async def run_cache_tests():
+async def test_for_you_cache():
     print("1. Initializing database and ensuring for_you_cache table exists...")
     init_db()
 
@@ -50,7 +50,7 @@ async def run_cache_tests():
     assert res3["picks"][0]["is_on_watchlist"] is True, "First pick should now show is_on_watchlist=True"
     print("   [OK] Watchlist status rehydrated dynamically on cached picks.")
 
-    print("5. Testing dynamic rating rehydration on cached picks...")
+    print("5. Testing cache auto-invalidation on new rating...")
     with get_db() as conn:
         conn.execute("""
             INSERT INTO ratings (title_id, score, aspect_tags, notes)
@@ -59,9 +59,9 @@ async def run_cache_tests():
         """, (first_title_id,))
 
     res4 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
-    assert res4["picks"][0]["title_id"] == first_title_id
-    assert res4["picks"][0]["user_rating"] == 5, f"Expected user_rating=5, got {res4['picks'][0].get('user_rating')}"
-    print("   [OK] Rating status rehydrated dynamically on cached picks without regenerating the list.")
+    pick_ids4 = [p["title_id"] for p in res4["picks"]]
+    assert first_title_id not in pick_ids4, f"Rated title {first_title_id} should be excluded on auto-refreshed picks: {pick_ids4}"
+    print(f"   [OK] Rating status change automatically invalidated cache and regenerated picks: {pick_ids4}")
 
     print("6. Testing explicit force_refresh=True (should regenerate)...")
     res5 = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=True)
@@ -102,4 +102,4 @@ async def run_cache_tests():
 
 
 if __name__ == "__main__":
-    asyncio.run(run_cache_tests())
+    asyncio.run(test_for_you_cache())
