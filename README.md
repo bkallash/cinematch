@@ -58,6 +58,8 @@ EMBEDDING_MODEL=openai/text-embedding-3-small
 
 > **Note**: Even before adding API keys, CineMatch runs fully with its pre-bundled catalog of famous titles and deterministic vector fallbacks.
 
+Set `EMBEDDING_PROVIDER=local` for offline token-based text matching without a model download. Cloud embeddings provide richer semantic matching. Each stored vector tracks its provider, model, and dimension; startup rebuilds incompatible or older unversioned vectors in batches of 64. With OpenRouter configured, this rebuild makes billable embedding requests. Failed batches are retried at the next startup.
+
 ### 3. Run the Web Application
 
 ```powershell
@@ -65,6 +67,55 @@ EMBEDDING_MODEL=openai/text-embedding-3-small
 ```
 
 Open your browser at: **[http://localhost:8000](http://localhost:8000)**
+
+---
+
+## Install from PyPI
+
+Install and run CineMatch from any directory:
+
+```powershell
+python -m pip install cinematch
+cinematch
+```
+
+On the first run, CineMatch prompts for:
+
+1. Your OpenRouter API key. Create one at [OpenRouter Keys](https://openrouter.ai/settings/keys). The key is entered using a hidden password prompt.
+2. An OpenRouter model identifier, such as `openai/gpt-4o`. Browse the available identifiers on the [OpenRouter Models](https://openrouter.ai/models) page.
+
+```text
+CineMatch first-run setup
+Create an API key at https://openrouter.ai/settings/keys
+OpenRouter API key (input is hidden):
+OpenRouter model [openai/gpt-4o]:
+```
+
+The configuration is saved in CineMatch's operating-system user data directory and reused on later runs. The SQLite database is stored there as well. To change the API key or model later, run:
+
+```powershell
+cinematch --configure
+```
+
+You can also create a `.env` file in the directory where you run CineMatch. This local configuration takes precedence:
+
+```env
+OPENROUTER_API_KEY=pypi_user_openrouter_key
+OPENROUTER_MODEL=openai/gpt-4o
+```
+
+Run `cinematch --help` to select a host, port, or custom data directory.
+
+### Build and publish a release
+
+```powershell
+python -m pip install --upgrade build twine
+python -m build
+python -m twine check dist/*
+python -m twine upload dist/*
+```
+
+PyPI accepts an API token as the username `__token__`; use the full token, including its `pypi-` prefix, as the password. Increase the version in `pyproject.toml` before every later release because PyPI release files cannot be replaced.
 
 ---
 
@@ -78,13 +129,15 @@ All architectural choices and domain terminology are formally documented:
 - [`docs/adr/0004-in-process-sqlite-vectors.md`](./docs/adr/0004-in-process-sqlite-vectors.md) — Zero-dependency in-process SQLite BLOB vector storage.
 - [`docs/adr/0005-dual-source-embedding-strategy.md`](./docs/adr/0005-dual-source-embedding-strategy.md) — OpenRouter with offline local embedding toggle.
 - [`docs/adr/0006-bundled-curated-starter-catalog.md`](./docs/adr/0006-bundled-curated-starter-catalog.md) — Bundled curated starter dataset.
+- [`docs/adr/0007-compatible-embeddings.md`](./docs/adr/0007-compatible-embeddings.md) — Embedding compatibility, batched rebuilds, and lightweight local matching.
 
 ---
 
-## Verification Test
+## Verification Tests
 
-To run the automated end-to-end pipeline test suite:
+Install test dependencies and run the suite. Tests use a temporary database and disable external APIs, leaving your library untouched:
 
 ```powershell
-.\venv\Scripts\python.exe -u tests/test_flow.py
+.\venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\venv\Scripts\python.exe -m pytest -q
 ```

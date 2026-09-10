@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
@@ -12,9 +13,9 @@ class Settings(BaseSettings):
     OPENROUTER_MODEL: str = Field(default="openai/gpt-4o", description="Model for reasoning and chat")
 
     # Embeddings
-    EMBEDDING_PROVIDER: str = Field(default="openrouter", description="'openrouter' or 'local'")
+    EMBEDDING_PROVIDER: Literal["openrouter", "local"] = "openrouter"
     EMBEDDING_MODEL: str = Field(default="openai/text-embedding-3-small", description="Model for text embeddings")
-    EMBEDDING_DIM: int = Field(default=1536, description="Dimension of embedding vectors")
+    EMBEDDING_DIM: int = Field(default=1536, gt=0, description="Dimension of embedding vectors")
 
     # TMDB API
     TMDB_API_KEY: str = Field(default="", description="The Movie Database API Key")

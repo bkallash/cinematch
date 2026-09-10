@@ -652,8 +652,8 @@ async def _cache_items_concurrently(items: list, existing_keys: set, limit: int 
                         tmdb_id, media_type, title, original_title, release_year,
                         overview, poster_path, backdrop_path, genres,
                         director_or_creator, cast_top, vote_average, vote_count,
-                        popularity, imdb_id, imdb_rating, embedding, embedding_dim
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        popularity, imdb_id, imdb_rating, embedding, embedding_dim, embedding_model
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     full["tmdb_id"], full["media_type"], full["title"],
                     full.get("original_title"), full.get("release_year"),
@@ -663,7 +663,7 @@ async def _cache_items_concurrently(items: list, existing_keys: set, limit: int 
                     full.get("vote_average", 0.0), full.get("vote_count", 0),
                     full.get("popularity", 0.0), full.get("imdb_id"),
                     full.get("imdb_rating") or full.get("vote_average", 0.0),
-                    blob, dim
+                    blob, dim, embedding_service.model_key
                 ))
                 if cursor.lastrowid:
                     inserted += 1
@@ -917,7 +917,7 @@ async def _ensure_title_embedding(title_id: int):
             row = conn.execute("SELECT * FROM titles WHERE id = ?", (title_id,)).fetchone()
         if not row:
             return
-        if row["embedding"] and row["director_or_creator"]:
+        if row["embedding"] and row["director_or_creator"] and row["embedding_model"] == embedding_service.model_key:
             return
 
         title_dict = format_title_row(row)
@@ -938,7 +938,8 @@ async def _ensure_title_embedding(title_id: int):
                     imdb_id = COALESCE(?, imdb_id),
                     imdb_rating = COALESCE(?, imdb_rating),
                     embedding = ?,
-                    embedding_dim = ?
+                    embedding_dim = ?,
+                    embedding_model = ?
                 WHERE id = ?
             """, (
                 (details.get("director_or_creator") if details else None),
@@ -947,8 +948,12 @@ async def _ensure_title_embedding(title_id: int):
                 (details.get("imdb_rating") if details else None),
                 blob,
                 len(vec),
+                embedding_service.model_key,
                 title_id
             ))
+            conn.execute("DELETE FROM for_you_cache")
+            conn.execute("UPDATE taste_dossiers SET is_dirty = 1")
+            conn.execute("UPDATE ratings_state SET revision = revision + 1 WHERE id = 1")
     except Exception as e:
         logger.error(f"Error ensuring embedding for title #{title_id}: {e}")
 

@@ -1,23 +1,28 @@
 import json
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from openai import AsyncOpenAI
 from app.config import settings
 from app.database import get_db
+from app.models.schemas import DossierContent
 
 logger = logging.getLogger(__name__)
 
 class TasteDossierService:
     def __init__(self):
         self._client: Optional[AsyncOpenAI] = None
+        self._synthesis_lock = asyncio.Lock()
 
     def _get_client(self) -> AsyncOpenAI:
         if self._client is None:
             api_key = settings.OPENROUTER_API_KEY or "dummy_key_for_init"
             self._client = AsyncOpenAI(
                 api_key=api_key,
-                base_url=settings.OPENROUTER_BASE_URL
+                base_url=settings.OPENROUTER_BASE_URL,
+                timeout=30.0,
+                max_retries=1,
             )
         return self._client
 
@@ -58,7 +63,13 @@ class TasteDossierService:
 
     async def get_or_update_dossier(self, user_id: str = "default_user", force: bool = False) -> Dict[str, Any]:
         """Fetch current taste dossier, re-synthesizing via GPT-4o if dirty."""
+        async with self._synthesis_lock:
+            return await self._synthesize_dossier(user_id, force)
+
+    async def _synthesize_dossier(self, user_id: str, force: bool) -> Dict[str, Any]:
         with get_db() as conn:
+            conn.execute("BEGIN")
+            revision = conn.execute("SELECT revision FROM ratings_state WHERE id = 1").fetchone()[0]
             row = conn.execute(
                 "SELECT * FROM taste_dossiers WHERE user_id = ?", (user_id,)
             ).fetchone()
@@ -112,10 +123,10 @@ class TasteDossierService:
             logger.warning("OPENROUTER_API_KEY not set. Cannot synthesize taste dossier with GPT-4o.")
             return {
                 "user_id": user_id,
-                "core_loves": ["Rich character development", "Strong visual identity"],
-                "deal_breakers": ["Predictable storytelling"],
+                "core_loves": [],
+                "deal_breakers": [],
                 "creator_affinities": [],
-                "atmospheric_preferences": ["Atmospheric immersion"],
+                "atmospheric_preferences": [],
                 "narrative_tropes": [],
                 "full_summary": f"Taste dossier generated from {ratings_count} ratings. Configure your OPENROUTER_API_KEY in .env to activate deep GPT-4o taste analysis.",
                 "ratings_count_at_synthesis": ratings_count,
@@ -129,7 +140,7 @@ class TasteDossierService:
         mediocre_titles = []
         disliked_titles = []
 
-        for r in ratings:
+        for r in ratings[:200]:
             genres_list = json.loads(r["genres"] or "[]")
             tags_list = json.loads(r["aspect_tags"] or "[]")
             age_label = self._format_age(r["updated_at"] or r["created_at"])
@@ -141,7 +152,7 @@ class TasteDossierService:
             if tags_list:
                 item_desc += f" | Tags: {', '.join(tags_list)}"
             if r["notes"]:
-                item_desc += f" | Note: '{r['notes']}'"
+                item_desc += f" | Note: '{r['notes'][:500]}'"
 
             if r["score"] in (5, 6):
                 loved_titles.append(item_desc)
@@ -158,7 +169,7 @@ Analyze the viewing history and ratings below to synthesize this user's psycholo
 The rating scale is strictly 1 to 6 (1-2 = Hated/Disliked, 3 = Mediocre/Tolerated, 4 = Good, 5 = Great, 6 = Masterpiece/Favorite).
 Each rating is annotated with how long ago it was logged (e.g. 'rated 3 days ago'). Weight recent ratings more heavily than older ones when analyzing preferences.
 
-### User's Rating History:
+### User's Rating History (up to 200 most recent ratings; notes truncated to 500 characters):
 [Masterpieces & Favorites (5-6 / 6)]:
 {chr(10).join(loved_titles) if loved_titles else 'None yet'}
 
@@ -194,7 +205,7 @@ Respond ONLY with a valid JSON object matching this schema:
                 temperature=0.3
             )
             raw_json = response.choices[0].message.content
-            data = json.loads(raw_json)
+            data = DossierContent.model_validate_json(raw_json).model_dump()
 
             core_loves = data.get("core_loves", [])
             deal_breakers = data.get("deal_breakers", [])
@@ -204,12 +215,15 @@ Respond ONLY with a valid JSON object matching this schema:
             full_summary = data.get("full_summary", "")
 
             with get_db() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                current_revision = conn.execute("SELECT revision FROM ratings_state WHERE id = 1").fetchone()[0]
+                is_dirty = current_revision != revision
                 conn.execute("""
                     INSERT INTO taste_dossiers (
                         user_id, core_loves, deal_breakers, creator_affinities,
                         atmospheric_preferences, narrative_tropes, full_summary,
                         ratings_count_at_synthesis, is_dirty, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(user_id) DO UPDATE SET
                         core_loves = excluded.core_loves,
                         deal_breakers = excluded.deal_breakers,
@@ -218,7 +232,7 @@ Respond ONLY with a valid JSON object matching this schema:
                         narrative_tropes = excluded.narrative_tropes,
                         full_summary = excluded.full_summary,
                         ratings_count_at_synthesis = excluded.ratings_count_at_synthesis,
-                        is_dirty = 0,
+                        is_dirty = excluded.is_dirty,
                         updated_at = CURRENT_TIMESTAMP
                 """, (
                     user_id,
@@ -228,7 +242,8 @@ Respond ONLY with a valid JSON object matching this schema:
                     json.dumps(atmospheric_preferences),
                     json.dumps(narrative_tropes),
                     full_summary,
-                    ratings_count
+                    ratings_count,
+                    int(is_dirty),
                 ))
 
             return {
@@ -240,7 +255,7 @@ Respond ONLY with a valid JSON object matching this schema:
                 "narrative_tropes": narrative_tropes,
                 "full_summary": full_summary,
                 "ratings_count_at_synthesis": ratings_count,
-                "is_dirty": False,
+                "is_dirty": is_dirty,
                 "updated_at": None
             }
         except Exception as e:
