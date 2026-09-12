@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cinematch"
-version = "0.1.1"
+version = "0.1.2"
 description = "A personalized movie and series recommendation web app"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -2,3 +2,5 @@ include README.md .env.example
 prune docs
 exclude CONTEXT.md linkedin-posts.md
 global-exclude *.py[cod] *.db *.db-shm *.db-wal .env
+
+include app/data/tmdb_default.json

@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from app.bundled_config import DEFAULT_TMDB_API_KEY
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -18,7 +19,7 @@ class Settings(BaseSettings):
     EMBEDDING_DIM: int = Field(default=1536, gt=0, description="Dimension of embedding vectors")
 
     # TMDB API
-    TMDB_API_KEY: str = Field(default="", description="The Movie Database API Key")
+    TMDB_API_KEY: str = Field(default=DEFAULT_TMDB_API_KEY, description="The Movie Database API Key")
     TMDB_BASE_URL: str = Field(default="https://api.themoviedb.org/3", description="TMDB API Base URL")
     TMDB_IMAGE_BASE_URL: str = Field(default="https://image.tmdb.org/t/p/w500", description="TMDB Poster CDN Base URL")
 

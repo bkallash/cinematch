@@ -22,6 +22,8 @@ cinematch --port 8080
 cinematch --data-dir ./my-library
 ```
 
+Chat requests such as “like La La Land” or “like The Office” use the reference’s genre, tone, themes, and storytelling style to find other titles. Inferred genres guide ranking and discovery; explicitly requested genres, years, and formats remain filters. Reference interpretation uses your configured chat model.
+
 ## Configuration
 
 For noninteractive startup, set both `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in your environment or a `.env` file in your working directory. See [.env.example](.env.example) for optional settings. Environment variables take precedence over the working directory's `.env`, then saved configuration. `--model` overrides the model for the current run.
@@ -33,11 +35,11 @@ For noninteractive startup, set both `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`
 | `EMBEDDING_PROVIDER` | `openrouter` (default) or `local` |
 | `EMBEDDING_MODEL` | Defaults to `openai/text-embedding-3-small` |
 | `EMBEDDING_DIM` | Embedding dimensions; defaults to `1536` |
-| `TMDB_API_KEY` | Optional TMDB key for live catalog lookup |
+| `TMDB_API_KEY` | Override the bundled TMDB key; an empty value disables live lookup |
 | `DATABASE_PATH` | Override the SQLite file location |
 | `APP_PORT` | Port; defaults to `8000` |
 
-A starter catalog is bundled, so TMDB credentials are optional. Embeddings use a separate OpenRouter model; `EMBEDDING_PROVIDER=local` uses local token hashing instead. OpenRouter calls use your account and may incur charges. Prompts and recommendation context are sent to the configured provider.
+A starter catalog and a shared TMDB API key are bundled, so live catalog lookup works without TMDB setup. You can supply your own key through `TMDB_API_KEY`. The shared key is publicly readable in the package; its availability depends on the shared account and key remaining active. Embeddings use a separate OpenRouter model; `EMBEDDING_PROVIDER=local` uses local token hashing instead. OpenRouter calls use your account and may incur charges. Prompts and recommendation context are sent to the configured provider.
 
 The CLI saves its `.env` and SQLite library in the following directory, unless you specify `--data-dir`:
 
@@ -64,18 +66,20 @@ FastAPI serves Jinja templates and static assets. SQLite stores ratings, watchli
 
 ## Build and publish
 
+Release builds include `app/data/tmdb_default.json`, a Git-ignored file containing `{"api_key": "<shared TMDB key>"}`. Create it locally before building; never commit it or force-add it. The source code contains only the resource loader. A source checkout without this file uses its own TMDB configuration.
+
 The distribution name and version are in `pyproject.toml`. You must own the PyPI project, and every release needs a new version.
 
 ```sh
 python -m pip install -e ".[dev]"
 python -m build
-python -m twine check dist/cinematch-0.1.1*
+python -m twine check dist/cinematch-0.1.2*
 ```
 
 Install the wheel in a fresh virtual environment and run `cinematch` outside the checkout. Then upload this release:
 
 ```sh
-python -m twine upload dist/cinematch-0.1.1-py3-none-any.whl dist/cinematch-0.1.1.tar.gz
+python -m twine upload dist/cinematch-0.1.2-py3-none-any.whl dist/cinematch-0.1.2.tar.gz
 ```
 
 Use your PyPI API token when prompted. See the [Python Packaging User Guide](https://packaging.python.org/en/latest/tutorials/packaging-projects/) for account setup and TestPyPI instructions.

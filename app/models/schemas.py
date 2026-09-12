@@ -99,6 +99,8 @@ class QueryIntent(BaseModel):
     model_config = ConfigDict(strict=True)
 
     semantic_vibe: str
+    reference_titles: List[str] = Field(default_factory=list)
+    similarity_genres: List[str] = Field(default_factory=list)
     media_type: Optional[Literal["movie", "tv"]] = None
     genres: List[str] = Field(default_factory=list)
     person: Optional[str] = None

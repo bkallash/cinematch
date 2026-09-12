@@ -21,3 +21,6 @@ dist/
 /docs/
 /CONTEXT.md
 /linkedin-posts.md
+
+# Shared TMDB credential is distributed in PyPI archives only.
+/app/data/tmdb_default.json

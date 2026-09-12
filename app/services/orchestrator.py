@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import random
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set
@@ -223,7 +224,9 @@ Recent conversation (context only; resolve follow-up references and retained con
 
 Return strictly a JSON object matching this schema:
 {{
-  "semantic_vibe": "A rich, descriptive paragraph describing the mood, narrative tropes, tone, aesthetic, and comparable themes to use for vector embedding search (e.g. 'nostalgic warm bittersweet romance with vibrant musicality and artistic ambition like La La Land')",
+  "semantic_vibe": "A rich, descriptive paragraph describing the mood, narrative tropes, tone, aesthetic, and comparable themes to use for vector embedding search (e.g. 'nostalgic warm bittersweet romance with vibrant musicality and artistic ambition')",
+  "reference_titles": ["canonical names of titles used as similarity references, correcting spelling such as lalaland"],
+  "similarity_genres": ["canonical TMDB genres inferred from the references, most relevant first; soft preferences only"],
   "media_type": "movie" | "tv" | null,
   "genres": ["only explicit canonical TMDB genres from: {', '.join(sorted(GENRE_MAP.values()))}"],
   "excluded_genres": ["canonical genres explicitly ruled out by the user"],
@@ -231,6 +234,20 @@ Return strictly a JSON object matching this schema:
   "year_min": integer or null,
   "year_max": integer or null
 }}
+
+Reference similarity rules:
+- "like <title>" asks for OTHER titles with similar genre, mood, themes, pacing,
+  narrative style, and character dynamics. It is not a title-name search.
+- Expand references into descriptive traits in semantic_vibe. Do not include title
+  names, actor names, or creator names in that embedding text.
+- "like lalaland" means bittersweet romantic drama, artistic ambition, vibrant
+  musical aesthetics and emotional longing. "like The Office" means awkward
+  workplace ensemble comedy, mockumentary style, everyday relationships and dry humor.
+- These examples illustrate the rule for ANY reference title, not a fixed lookup list.
+- Put inferred genres in similarity_genres, NOT genres. Only explicit user genre
+  requirements belong in genres. Do not infer person or year filters from a reference.
+- Infer media_type from the reference unless the user asks for a different format.
+- For multiple references, describe their shared traits; retain explicit user constraints.
 
 Taxonomy rules:
 - A sitcom is media_type "tv" and genre "Comedy"; TMDB has no "Sitcom" genre.
@@ -310,6 +327,21 @@ Taxonomy rules:
             for g in normalized.get("excluded_genres", [])
             if isinstance(g, str) and g.strip().casefold() in GENRE_NAME_TO_ID
         ]
+        normalized["similarity_genres"] = list(dict.fromkeys(
+            genre for raw in normalized.get("similarity_genres", [])
+            if isinstance(raw, str)
+            for genre in GENRE_ALIASES.get(raw.strip().casefold(),
+                [GENRE_MAP[GENRE_NAME_TO_ID[raw.strip().casefold()]]]
+                if raw.strip().casefold() in GENRE_NAME_TO_ID else [])
+            if genre not in normalized["excluded_genres"]
+        ))
+        # Keep names out of embedding input even if the parser repeats a reference.
+        vibe = normalized.get("semantic_vibe", "")
+        for title in normalized.get("reference_titles", []):
+            if title.strip():
+                pattern = r"(?<!\w)" + r"\s*".join(re.escape(word) for word in title.split()) + r"(?!\w)"
+                vibe = re.sub(pattern, " ", vibe, flags=re.IGNORECASE)
+        normalized["semantic_vibe"] = " ".join(vibe.split()) or " ".join(normalized["similarity_genres"]) or "similar stories and themes"
         return normalized
 
     async def _search_local_candidates(self, intent: Dict[str, Any], query_vec: Optional[np.ndarray] = None) -> List[Dict[str, Any]]:
@@ -429,6 +461,9 @@ Taxonomy rules:
             score = taste_score
             if query_vec is not None and vector is not None:
                 score = QUERY_WEIGHT * float(np.dot(query_vec, vector)) + (1 - QUERY_WEIGHT) * taste_score
+            preferred = {g.casefold() for g in intent.get("similarity_genres", [])}
+            if preferred:
+                score += GENRE_WEIGHT * len(genres & preferred) / len(preferred)
             quality = min((row["vote_average"] or 0) / 10, 1) * QUALITY_WEIGHT
             quality += min((row["popularity"] or 0) / 200, 1) * POPULARITY_WEIGHT
             candidates.append({
@@ -507,6 +542,9 @@ Taxonomy rules:
 
     @staticmethod
     def _matches_intent(title: Dict[str, Any], intent: Dict[str, Any]) -> bool:
+        reference_names = {re.sub(r"\W+", "", name).casefold() for name in intent.get("reference_titles", [])}
+        if re.sub(r"\W+", "", title.get("title") or "").casefold() in reference_names:
+            return False
         if intent.get("media_type") and title.get("media_type") and title["media_type"] != intent["media_type"]:
             return False
         year = title.get("release_year")
@@ -557,7 +595,10 @@ Taxonomy rules:
         if intent.get("person"):
             tmdb_items = await tmdb_service.find_person_titles(intent["person"], media_type)
         else:
-            genre_ids = [str(GENRE_NAME_TO_ID[g.casefold()]) for g in genres if g.casefold() in GENRE_NAME_TO_ID]
+            # Use the primary inferred genre to broaden discovery. It is never a
+            # mandatory local filter or an intersection of every reference genre.
+            discovery_genres = genres or intent.get("similarity_genres", [])[:1]
+            genre_ids = [str(GENRE_NAME_TO_ID[g.casefold()]) for g in discovery_genres if g.casefold() in GENRE_NAME_TO_ID]
             tmdb_items = await tmdb_service.discover_titles(
                 media_type=media_type, with_genres=",".join(genre_ids) or None,
                 year_min=year_min, year_max=year_max, limit=20,

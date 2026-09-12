@@ -470,3 +470,48 @@ async def test_invalid_selection_entries_backfill_from_candidates(monkeypatch):
     ids = [r["title_id"] for r in result["recommendations"]]
     assert len(set(ids)) == 3
     assert set(ids).issubset({r["title_id"] for r in rows})
+
+
+@pytest.mark.asyncio
+async def test_reference_similarity_uses_traits_and_keeps_genres_soft(monkeypatch):
+    svc = OrchestratorService()
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-only")
+    mock_chat(svc, {
+        "semantic_vibe": "La La Land bittersweet romance artistic ambition",
+        "media_type": "movie", "reference_titles": ["La La Land"],
+        "similarity_genres": ["Romance", "Music", "Drama"], "genres": [],
+    })
+    intent = await svc._parse_query_intent("something like lalaland", "all")
+    assert "la la land" not in intent["semantic_vibe"].casefold()
+    assert "bittersweet romance" in intent["semantic_vibe"]
+    assert intent["similarity_genres"] == ["Romance", "Music", "Drama"]
+    assert svc._matches_intent({"title": "Another Romance", "genres": ["Romance"]}, intent)
+    assert not svc._matches_intent({"title": "La La Land", "genres": ["Romance"]}, intent)
+    discover = AsyncMock(return_value=[])
+    monkeypatch.setattr(tmdb_service, "discover_titles", discover)
+    title_search = AsyncMock(side_effect=AssertionError("Must discover by traits"))
+    monkeypatch.setattr(tmdb_service, "search_titles", title_search)
+    await svc._discover_and_cache_tmdb(intent)
+    assert discover.call_args.kwargs["with_genres"] == "10749"
+    title_search.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_reference_comedy_retains_explicit_constraints(monkeypatch):
+    svc = OrchestratorService()
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-only")
+    mock_chat(svc, {
+        "semantic_vibe": "The Office awkward workplace ensemble comedy",
+        "media_type": "tv", "reference_titles": ["The Office"],
+        "similarity_genres": ["Comedy"], "genres": ["Drama"],
+        "excluded_genres": ["Horror"], "year_min": 2000,
+    })
+    intent = await svc._parse_query_intent("movies like The Office but dramas after 2000, no horror", "movie")
+    assert intent["media_type"] == "movie"
+    assert "the office" not in intent["semantic_vibe"].casefold()
+    assert not svc._matches_intent({"title": "Comedy", "genres": ["Comedy"], "release_year": 2020}, intent)
+    discover = AsyncMock(return_value=[])
+    monkeypatch.setattr(tmdb_service, "discover_titles", discover)
+    await svc._discover_and_cache_tmdb(intent)
+    assert discover.call_args.kwargs["with_genres"] == "18"
+    assert discover.call_args.kwargs["year_min"] == 2000
