@@ -193,6 +193,35 @@ async def test_empty_shelf_is_cached_and_embedding_identity_invalidates_it(monke
     assert discover.await_count == 2
 
 
+@pytest.mark.parametrize("media", ["movie", "tv"])
+def test_for_you_skip_refills_and_persists_without_rating(media):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    for tid in range(1, 8):
+        title(tid, media=media)
+    client = TestClient(app)
+    url = f"/api/for-you?media_type={media}&format=json"
+    initial = client.get(url).json()["picks"]
+    skipped = initial[0]["title_id"]
+    with get_db() as conn:
+        conn.execute("INSERT INTO watchlist (title_id) VALUES (?)", (skipped,))
+    response = client.post(f"/api/for-you/skip/{skipped}?media_type={media}")
+    assert response.status_code == 200
+    assert 'aria-label="Skip ' in response.text
+    assert f'aria-label="Skip Title {skipped}"' not in response.text
+    for suffix in ("", "&refresh=true"):
+        picks = client.get(url + suffix).json()["picks"]
+        assert len(picks) == 5
+        assert skipped not in {p["title_id"] for p in picks}
+        assert all(p["media_type"] == media for p in picks)
+    assert client.post(f"/api/for-you/skip/{skipped}").status_code == 200
+    assert client.post("/api/for-you/skip/9999").status_code == 404
+    with get_db() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM ratings").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM skipped_titles").fetchone()[0] == 0
+        assert conn.execute("SELECT title_id FROM watchlist").fetchone()[0] == skipped
+
+
 def test_http_rating_edit_refreshes_next_shelf_without_manual_refresh():
     import asyncio
     from fastapi.testclient import TestClient

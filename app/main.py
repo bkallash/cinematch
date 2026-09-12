@@ -325,6 +325,17 @@ async def api_for_you(
         "is_htmx": True,
     })
 
+@app.post("/api/for-you/skip/{title_id}", response_class=HTMLResponse)
+async def api_for_you_skip(request: Request, title_id: int, media_type: str = "movie", limit: int = 5):
+    """Dismiss a Title from future For You shelves and return replacement picks."""
+    with get_db() as conn:
+        if not conn.execute("SELECT id FROM titles WHERE id = ?", (title_id,)).fetchone():
+            raise HTTPException(status_code=404, detail="Title not found")
+        conn.execute("INSERT OR IGNORE INTO for_you_skips (title_id) VALUES (?)", (title_id,))
+        conn.execute("DELETE FROM for_you_cache WHERE user_id = 'default_user'")
+    return await api_for_you(request, media_type=media_type, limit=limit)
+
+
 @app.post("/api/chat", response_class=HTMLResponse)
 async def api_chat(
     request: Request,

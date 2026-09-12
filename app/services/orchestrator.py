@@ -853,6 +853,12 @@ Taxonomy rules:
         normalized_media = media_type_preference if media_type_preference in ("movie", "tv") else "all"
         media_filter = media_type_preference if media_type_preference in ("movie", "tv") else None
 
+        # For You dismissals are separate from Deck's "haven't seen" skips.
+        with get_db() as conn:
+            dismissed_ids = {row[0] for row in conn.execute(
+                "SELECT title_id FROM for_you_skips WHERE user_id = ?", (user_id,)
+            )}
+
         if not force_refresh:
             with get_db() as conn:
                 cached_row = conn.execute("""
@@ -887,6 +893,8 @@ Taxonomy rules:
                 if not should_auto_refresh:
                     try:
                         cached_picks = json.loads(cached_row["picks_json"] or "[]")
+                        if any(p.get("title_id") in dismissed_ids for p in cached_picks):
+                            should_auto_refresh = True
                     except Exception:
                         cached_picks = []
 
@@ -945,11 +953,12 @@ Taxonomy rules:
 
         dossier = await taste_dossier_service.get_or_update_dossier(user_id=user_id)
 
-        scored = self._rank_candidates({"media_type": media_filter}, signal=signal)
+        intent = {"media_type": media_filter, "_excluded_title_ids": dismissed_ids}
+        scored = self._rank_candidates(intent, signal=signal)
         if settings.TMDB_API_KEY and self._needs_discovery(scored, has_positive_evidence=bool(liked_count)):
             discovered = await self._try_discovery(self._for_you_discovery_intent(signal, media_filter))
             if discovered:
-                scored = self._rank_candidates({"media_type": media_filter}, signal=signal)
+                scored = self._rank_candidates(intent, signal=signal)
         shortlist = scored[:SHORTLIST_LIMIT]
 
         # Select loved titles matching the requested media type first

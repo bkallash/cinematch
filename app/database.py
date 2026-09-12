@@ -109,6 +109,12 @@ def init_db():
 
         CREATE INDEX IF NOT EXISTS idx_skipped_title ON skipped_titles(title_id);
 
+        CREATE TABLE IF NOT EXISTS for_you_skips (
+            user_id TEXT NOT NULL DEFAULT 'default_user',
+            title_id INTEGER NOT NULL REFERENCES titles(id) ON DELETE CASCADE,
+            PRIMARY KEY (user_id, title_id)
+        );
+
         CREATE TABLE IF NOT EXISTS taste_dossiers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL DEFAULT 'default_user',

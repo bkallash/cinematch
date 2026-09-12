@@ -34,6 +34,15 @@
                 {% endif %}
                 <p class="text-sm text-notion-slate leading-relaxed mt-2 border-l-2 border-notion-primary/60 pl-3 italic">“{{ item.reason }}”</p>
                 <div class="flex items-center gap-2 mt-3">
+                    <button type="button"
+                            hx-post="/api/for-you/skip/{{ item.title_id }}?media_type={{ media_type }}"
+                            hx-target="#for-you-results-target" hx-swap="outerHTML"
+                            hx-disabled-elt="this" hx-indicator="#for-you-loading"
+                            aria-label="Skip {{ item.title }}"
+                            title="Skip this title in future For You suggestions"
+                            class="px-3.5 py-2 rounded-lg border border-notion-hairline text-notion-slate hover:bg-notion-surface text-[13px] font-medium disabled:opacity-50">
+                        Skip
+                    </button>
                     {% if item.user_rating %}
                     <button type="button"
                             @click="$dispatch('open-rating-modal', { id: {{ item.title_id }}, title: '{{ item.title | replace("'", "\\'") }}', release_year: '{{ item.release_year }}', media_type: '{{ item.media_type }}', poster_url: '{{ item.poster_path | poster_url }}', current_score: {{ item.user_rating }} })"

@@ -24,7 +24,27 @@ cinematch --data-dir ./my-library
 
 Chat requests such as “like La La Land” or “like The Office” use the reference’s genre, tone, themes, and storytelling style to find other titles. Inferred genres guide ranking and discovery; explicitly requested genres, years, and formats remain filters. Reference interpretation uses your configured chat model.
 
+## Screenshots
+
+### Rate movies and series
+
+![Movie cards for rating titles](https://raw.githubusercontent.com/bkallash/cinematch/main/assets/movies-cards-deck.webp)
+
+### For You
+
+![Personalized For You recommendations](https://raw.githubusercontent.com/bkallash/cinematch/main/assets/for-you.webp)
+
+### Your library
+
+![Library of rated titles and watchlist entries](https://raw.githubusercontent.com/bkallash/cinematch/main/assets/library.webp)
+
+### Chat
+
+![Chat for finding movies and series](https://raw.githubusercontent.com/bkallash/cinematch/main/assets/chat.webp)
+
 ## Configuration
+
+On **For You**, click **Skip** to dismiss a movie or series and refill the suggestions. Skipped titles stay out of future For You picks, including after refresh or restart. This leaves ratings and watchlist entries unchanged. Deck skips still mean “haven't seen” and do not dismiss For You suggestions.
 
 For noninteractive startup, set both `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in your environment or a `.env` file in your working directory. See [.env.example](.env.example) for optional settings. Environment variables take precedence over the working directory's `.env`, then saved configuration. `--model` overrides the model for the current run.
 
