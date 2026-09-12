@@ -19,7 +19,8 @@ class EmbeddingService:
     @property
     def model_key(self) -> str:
         model = "local:token-hash-v1" if self.is_local else f"openrouter:{settings.EMBEDDING_MODEL}"
-        return f"{model}:{settings.EMBEDDING_DIM}"
+        # Rebuild older metadata-rich vectors before comparing synopsis evidence.
+        return f"{model}:{settings.EMBEDDING_DIM}:synopsis-v3"
 
     def _get_client(self) -> AsyncOpenAI:
         if self._client is None:
@@ -41,7 +42,13 @@ class EmbeddingService:
         """Embed a batch. Cloud failures never become stored local vectors."""
         if not texts:
             return []
-        clean = [text.strip() or "cinema film" for text in texts]
+        clean = [text.strip() for text in texts]
+        if any(not text for text in clean):
+            # Missing synopsis is no semantic evidence, even with a cloud provider.
+            present = await self.get_embeddings([text for text in clean if text])
+            available_vectors = iter(present)
+            return [next(available_vectors) if text else np.zeros(settings.EMBEDDING_DIM, dtype=np.float32)
+                    for text in clean]
         if self.is_local:
             return [self._local_embedding(text) for text in clean]
         response = await self._get_client().embeddings.create(
@@ -73,23 +80,8 @@ class EmbeddingService:
 
     @staticmethod
     def build_title_embedding_text(title_data: dict) -> str:
-        """Compose a high-signal semantic string for a Title."""
-        title = title_data.get("title", "")
-        year = title_data.get("release_year") or "Unknown"
-        media_type = "Movie" if title_data.get("media_type") == "movie" else "TV Series"
-        genres = ", ".join(title_data.get("genres") or [])
-        director = title_data.get("director_or_creator") or "Unknown"
-        cast = ", ".join((title_data.get("cast_top") or [])[:4])
-        overview = title_data.get("overview") or ""
-
-        return (
-            f"Title: {title} ({year})\n"
-            f"Format: {media_type}\n"
-            f"Genres: {genres}\n"
-            f"Director/Creator: {director}\n"
-            f"Leading Cast: {cast}\n"
-            f"Plot & Atmospheric Themes: {overview}"
-        )
+        """Embed only canonical synopsis; genres are scored independently."""
+        return (title_data.get("overview") or "").strip()
 
     @staticmethod
     def vec_to_bytes(vec: np.ndarray) -> bytes:

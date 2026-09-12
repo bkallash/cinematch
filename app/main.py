@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import uuid
+from html import escape
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
@@ -17,7 +18,11 @@ from app.database import get_db, init_db
 from app.services.tmdb import tmdb_service
 from app.services.embeddings import embedding_service
 from app.services.taste_dossier import taste_dossier_service
-from app.services.orchestrator import orchestrator_service
+from app.services.orchestrator import (
+    DECK_MIN_VOTE_AVERAGE,
+    DECK_MIN_VOTE_COUNT,
+    orchestrator_service,
+)
 from app.services.seeder import seed_starter_catalog
 
 logging.basicConfig(level=logging.INFO)
@@ -482,31 +487,31 @@ async def api_dossier_regenerate(request: Request):
     dossier = await taste_dossier_service.get_or_update_dossier(force=True)
     return HTMLResponse(f"""
         <div class="cm-card p-5 text-[15px] leading-relaxed text-notion-charcoal">
-            {dossier['full_summary'] or 'Rate at least 3 Titles and your Dossier will appear here.'}
+            {escape(dossier['full_summary'] or 'Rate at least 3 Titles and your Dossier will appear here.')}
         </div>
         <div class="grid sm:grid-cols-2 gap-3 mt-3">
             <div class="rounded-xl bg-notion-mint p-5">
                 <p class="cm-eyebrow" style="color:#1aae39;">Loves</p>
                 <div class="flex flex-wrap gap-1.5 mt-2">
-                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{item}</span>' for item in dossier['core_loves'])}
+                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{escape(item)}</span>' for item in dossier['core_loves'])}
                 </div>
             </div>
             <div class="rounded-xl bg-notion-rose p-5">
                 <p class="cm-eyebrow" style="color:#a02e6d;">Deal-breakers</p>
                 <div class="flex flex-wrap gap-1.5 mt-2">
-                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{item}</span>' for item in dossier['deal_breakers'])}
+                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{escape(item)}</span>' for item in dossier['deal_breakers'])}
                 </div>
             </div>
             <div class="rounded-xl bg-notion-sky p-5">
                 <p class="cm-eyebrow" style="color:#0075de;">Atmosphere</p>
                 <div class="flex flex-wrap gap-1.5 mt-2">
-                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{item}</span>' for item in dossier['atmospheric_preferences'])}
+                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{escape(item)}</span>' for item in dossier['atmospheric_preferences'])}
                 </div>
             </div>
             <div class="rounded-xl bg-notion-lavender p-5">
                 <p class="cm-eyebrow" style="color:#391c57;">Creators</p>
                 <div class="flex flex-wrap gap-1.5 mt-2">
-                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{item}</span>' for item in dossier['creator_affinities'])}
+                    {''.join(f'<span class="px-2 py-1 rounded-md bg-notion-canvas border border-notion-hairline text-[13px] font-medium">{escape(item)}</span>' for item in dossier['creator_affinities'])}
                 </div>
             </div>
         </div>
@@ -556,10 +561,6 @@ async def get_deck_title_by_id(title_id: int) -> Optional[dict]:
 
     return title_dict
 
-# Minimum TMDB signals for a Title to be considered "famous and well-rated"
-# enough for the Rating Deck bootstrap.
-DECK_MIN_VOTE_COUNT = 800
-DECK_MIN_VOTE_AVERAGE = 6.4
 DECK_REFILL_LOW_WATERMARK = 15  # Proactively refill when remaining unseen titles drop below 15
 DECK_BUFFER_TARGET = 30
 DECK_SUGGESTION_CADENCE = 3     # Occasional cadence: every 3rd card can be a personalized suggestion
@@ -812,8 +813,8 @@ async def get_next_deck_title() -> Optional[dict]:
     2. On cadence (every 3rd card), serves a personalized suggestion based on the user's
        ratings / taste vector if one is available.
     3. Otherwise serves widely recognized unrated titles.
-    4. Falls back to any unrated title in SQLite.
-    5. Finally recycles the oldest skipped title so the deck never runs out.
+    4. Refills when the unseen quality pool is exhausted.
+    5. Finally recycles the oldest skipped quality Title.
     """
     with get_db() as conn:
         remaining = conn.execute("""
@@ -823,7 +824,8 @@ async def get_next_deck_title() -> Optional[dict]:
             LEFT JOIN skipped_titles s ON t.id = s.title_id
             LEFT JOIN watchlist w ON t.id = w.title_id
             WHERE r.id IS NULL AND s.id IS NULL AND w.id IS NULL
-        """).fetchone()[0]
+              AND t.vote_count >= ? AND t.vote_average >= ?
+        """, (DECK_MIN_VOTE_COUNT, DECK_MIN_VOTE_AVERAGE)).fetchone()[0]
 
     # Proactive non-blocking refill before running out!
     if remaining < DECK_REFILL_LOW_WATERMARK:
@@ -857,23 +859,7 @@ async def get_next_deck_title() -> Optional[dict]:
     if row:
         return format_title_row(row)
 
-    # Step 3: Any unseen Title in local catalog (long-tail cache)
-    with get_db() as conn:
-        row = conn.execute("""
-            SELECT t.*
-            FROM titles t
-            LEFT JOIN ratings r ON t.id = r.title_id
-            LEFT JOIN skipped_titles s ON t.id = s.title_id
-            LEFT JOIN watchlist w ON t.id = w.title_id
-            WHERE r.id IS NULL AND s.id IS NULL AND w.id IS NULL
-            ORDER BY t.popularity DESC, RANDOM()
-            LIMIT 1
-        """).fetchone()
-
-    if row:
-        return format_title_row(row)
-
-    # Step 4: If completely empty, do a fast synchronous top-up
+    # Step 3: Refill the quality pool synchronously once it is exhausted.
     if settings.TMDB_API_KEY:
         await refill_deck_with_preferences_and_famous()
         with get_db() as conn:
@@ -884,13 +870,15 @@ async def get_next_deck_title() -> Optional[dict]:
                 LEFT JOIN skipped_titles s ON t.id = s.title_id
                 LEFT JOIN watchlist w ON t.id = w.title_id
                 WHERE r.id IS NULL AND s.id IS NULL AND w.id IS NULL
+                  AND t.vote_count >= ? AND t.vote_average >= ?
                 ORDER BY t.popularity DESC, RANDOM()
                 LIMIT 1
-            """).fetchone()
+            """, (DECK_MIN_VOTE_COUNT, DECK_MIN_VOTE_AVERAGE)).fetchone()
         if row:
             return format_title_row(row)
 
-    # Step 5: Recycle the oldest skipped Title so the deck NEVER completes
+    # Step 4: Recycle the oldest skipped quality Title so low-signal Titles are
+    # never served merely because the fresh pool ran out.
     with get_db() as conn:
         row = conn.execute("""
             SELECT t.*
@@ -899,9 +887,10 @@ async def get_next_deck_title() -> Optional[dict]:
             LEFT JOIN ratings r ON t.id = r.title_id
             LEFT JOIN watchlist w ON t.id = w.title_id
             WHERE r.id IS NULL AND w.id IS NULL
+              AND t.vote_count >= ? AND t.vote_average >= ?
             ORDER BY s.created_at ASC
             LIMIT 1
-        """).fetchone()
+        """, (DECK_MIN_VOTE_COUNT, DECK_MIN_VOTE_AVERAGE)).fetchone()
         if row:
             conn.execute("DELETE FROM skipped_titles WHERE title_id = ?", (row["id"],))
 
@@ -933,6 +922,8 @@ async def _ensure_title_embedding(title_id: int):
         with get_db() as conn:
             conn.execute("""
                 UPDATE titles SET
+                    overview = COALESCE(?, overview),
+                    genres = COALESCE(?, genres),
                     director_or_creator = COALESCE(?, director_or_creator),
                     cast_top = COALESCE(?, cast_top),
                     imdb_id = COALESCE(?, imdb_id),
@@ -942,6 +933,8 @@ async def _ensure_title_embedding(title_id: int):
                     embedding_model = ?
                 WHERE id = ?
             """, (
+                (details.get("overview") if details else None),
+                (json.dumps(details["genres"]) if details and "genres" in details else None),
                 (details.get("director_or_creator") if details else None),
                 (json.dumps(details.get("cast_top") or []) if details else None),
                 (details.get("imdb_id") if details else None),

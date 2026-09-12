@@ -120,6 +120,7 @@ def init_db():
             full_summary TEXT DEFAULT '',
             ratings_count_at_synthesis INTEGER DEFAULT 0,
             is_dirty INTEGER DEFAULT 1,
+            evidence_version INTEGER NOT NULL DEFAULT 0,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id)
         );
@@ -149,6 +150,9 @@ def init_db():
             personalized INTEGER NOT NULL DEFAULT 1,
             ratings_count INTEGER NOT NULL DEFAULT 0,
             last_rated_at TIMESTAMP,
+            ratings_revision INTEGER NOT NULL DEFAULT -1,
+            requested_limit INTEGER NOT NULL DEFAULT 0,
+            pipeline_version INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, media_type)
@@ -201,5 +205,16 @@ def init_db():
             conn.execute("ALTER TABLE for_you_cache ADD COLUMN last_rated_at TIMESTAMP")
         if "ratings_revision" not in existing_cache_cols:
             conn.execute("ALTER TABLE for_you_cache ADD COLUMN ratings_revision INTEGER NOT NULL DEFAULT -1")
+        if "requested_limit" not in existing_cache_cols:
+            conn.execute("ALTER TABLE for_you_cache ADD COLUMN requested_limit INTEGER NOT NULL DEFAULT 0")
+        if "pipeline_version" not in existing_cache_cols:
+            conn.execute("ALTER TABLE for_you_cache ADD COLUMN pipeline_version INTEGER NOT NULL DEFAULT 0")
+
+        if "embedding_key" not in existing_cache_cols:
+            conn.execute("ALTER TABLE for_you_cache ADD COLUMN embedding_key TEXT")
+
+        dossier_cols = {c[1] for c in conn.execute("PRAGMA table_info(taste_dossiers)")}
+        if "evidence_version" not in dossier_cols:
+            conn.execute("ALTER TABLE taste_dossiers ADD COLUMN evidence_version INTEGER NOT NULL DEFAULT 0")
 
         logger.info("Database initialized successfully.")

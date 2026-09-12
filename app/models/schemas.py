@@ -102,6 +102,7 @@ class QueryIntent(BaseModel):
     media_type: Optional[Literal["movie", "tv"]] = None
     genres: List[str] = Field(default_factory=list)
     person: Optional[str] = None
+    excluded_genres: List[str] = Field(default_factory=list)
     year_min: Optional[int] = Field(default=None, ge=1800, le=2200)
     year_max: Optional[int] = Field(default=None, ge=1800, le=2200)
 
@@ -110,6 +111,7 @@ class ModelPick(BaseModel):
     model_config = ConfigDict(strict=True)
 
     title_id: int
+    title: str = Field(min_length=1)
     reason: str = ""
 
 

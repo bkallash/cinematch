@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock
 import numpy as np
 import httpx
 import pytest
+import app.main as main_module
 
 from app.config import settings
 from app.database import get_db, init_db
@@ -60,6 +61,80 @@ def test_local_embedding_stable_across_processes():
 
 
 @pytest.mark.asyncio
+async def test_title_names_do_not_influence_taste_embeddings(monkeypatch):
+    monkeypatch.setattr(settings, "EMBEDDING_PROVIDER", "local")
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "")
+    shared_taste = {
+        "media_type": "movie",
+        "release_year": 2020,
+        "genres": ["Drama"],
+        "director_or_creator": "A Director",
+        "cast_top": ["An Actor"],
+        "overview": "A grieving family rebuilds their relationship after a loss.",
+    }
+
+    first = embedding_service.build_title_embedding_text(
+        {**shared_taste, "title": "Nymphomaniac"}
+    )
+    renamed = embedding_service.build_title_embedding_text(
+        {**shared_taste, "title": "A Nymphoid Barbarian"}
+    )
+
+    assert first == renamed
+    assert np.array_equal(
+        await embedding_service.get_embedding(first),
+        await embedding_service.get_embedding(renamed),
+    )
+
+
+@pytest.mark.asyncio
+async def test_deck_suggestion_rejects_unrated_obscure_candidates():
+    vec = await embedding_service.get_embedding("character driven family drama")
+    blob = embedding_service.vec_to_bytes(vec)
+    established_vec = await embedding_service.get_embedding("character driven family drama hopeful")
+    established_blob = embedding_service.vec_to_bytes(established_vec)
+    with get_db() as conn:
+        for tmdb_id, title, votes, rating, title_blob in (
+            (91001, "Loved Drama One", 5000, 8.2, blob),
+            (91002, "Loved Drama Two", 4000, 7.9, blob),
+            (91003, "Obscure Knockoff", 12, 2.8, blob),
+            (91004, "Established Drama", 2500, 7.6, established_blob),
+        ):
+            conn.execute(
+                """INSERT INTO titles
+                   (tmdb_id, media_type, title, genres, vote_count, vote_average,
+                    popularity, embedding, embedding_dim, embedding_model)
+                   VALUES (?, 'movie', ?, '[\"Drama\"]', ?, ?, 50, ?, ?, ?)""",
+                (tmdb_id, title, votes, rating, title_blob, len(vec), embedding_service.model_key),
+            )
+        conn.execute("INSERT INTO ratings (title_id, score) SELECT id, 6 FROM titles WHERE tmdb_id IN (91001, 91002)")
+
+    suggestion = await OrchestratorService().get_deck_suggestion()
+
+    assert suggestion is not None
+    assert suggestion["title"] == "Established Drama"
+
+
+@pytest.mark.asyncio
+async def test_deck_never_falls_back_to_obscure_unrated_title(monkeypatch):
+    with get_db() as conn:
+        conn.execute(
+            """INSERT INTO titles (tmdb_id, media_type, title, vote_count, vote_average, popularity)
+               VALUES (92001, 'movie', 'Nobody Watched This', 7, 2.1, 0.1),
+                      (92002, 'movie', 'Known Skipped Movie', 3000, 7.4, 60)"""
+        )
+        known_id = conn.execute("SELECT id FROM titles WHERE tmdb_id=92002").fetchone()[0]
+        conn.execute("INSERT INTO skipped_titles (title_id) VALUES (?)", (known_id,))
+
+    monkeypatch.setattr(main_module, "_get_and_increment_deck_serve_count", lambda: 1)
+    monkeypatch.setattr(main_module, "schedule_deck_refill_if_needed", lambda: None)
+    result = await main_module.get_next_deck_title()
+
+    assert result is not None
+    assert result["title"] == "Known Skipped Movie"
+
+
+@pytest.mark.asyncio
 async def test_explicit_filters():
     await candidates()
     result = await OrchestratorService()._search_local_candidates({
@@ -73,7 +148,7 @@ async def test_chat_history_and_unique_bounded_picks(monkeypatch):
     rows = await candidates()
     monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-only")
     svc = OrchestratorService()
-    create = mock_chat(svc, {"recommendations": [{"title_id": 1, "reason": "A warm romantic story."}] * 7})
+    create = mock_chat(svc, {"recommendations": [{"title_id": 1, "title": "Title 1", "reason": "A warm romantic story."}] * 7})
     result = await svc._rerank_and_justify("More like that", [{"role": "user", "content": "HISTORY_SENTINEL"}], rows, {})
     assert "HISTORY_SENTINEL" in json.dumps(create.call_args.kwargs["messages"])
     ids = [r["title_id"] for r in result["recommendations"]]
@@ -86,7 +161,7 @@ async def test_personalized_duplicates_are_backfilled(monkeypatch):
     rows = await candidates()
     monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-only")
     svc = OrchestratorService()
-    mock_chat(svc, {"picks": [{"title_id": 1, "reason": "A warm romantic story."}] * 5})
+    mock_chat(svc, {"picks": [{"title_id": 1, "title": "Title 1", "reason": "A warm romantic story."}] * 5})
     picks = await svc._rerank_personalized_picks(rows, {}, 3, 5)
     assert len({p["title_id"] for p in picks}) == 5
 
@@ -99,6 +174,41 @@ async def test_bad_intent_falls_back(monkeypatch):
     intent = await svc._parse_query_intent("romance", "movie")
     assert intent["semantic_vibe"] == "romance"
     assert intent["media_type"] == "movie"
+
+
+@pytest.mark.asyncio
+async def test_sitcom_intent_is_normalized_to_tmdb_comedy(monkeypatch):
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-only")
+    svc = OrchestratorService()
+    mock_chat(svc, {
+        "semantic_vibe": "lighthearted workplace sitcom with rapid jokes",
+        "media_type": None,
+        "genres": ["Sitcom"],
+        "person": None,
+        "year_min": None,
+        "year_max": None,
+    })
+
+    intent = await svc._parse_query_intent("funny sitcom", "all")
+
+    assert intent["media_type"] == "tv"
+    assert intent["genres"] == ["Comedy"]
+
+
+def test_unknown_model_genres_do_not_eliminate_semantic_candidates():
+    intent = OrchestratorService._normalize_intent({
+        "semantic_vibe": "surreal funny comfort watch",
+        "media_type": "tv",
+        "genres": ["Sitcom", "Feel-Good", "Comedy"],
+        "person": None,
+        "year_min": None,
+        "year_max": None,
+    }, "funny sitcom")
+
+    assert intent["genres"] == ["Comedy"]
+    assert OrchestratorService._matches_intent(
+        {"genres": ["Comedy"], "release_year": 2020}, intent
+    )
 
 
 @pytest.mark.asyncio
@@ -221,6 +331,61 @@ async def test_chat_reuses_embedding_after_discovery_and_supplies_intent_history
     assert parse.call_args.args[2] == [{"role": "user", "content": "Earlier request"}]
     assert embed.await_count == 1
     assert search.await_count == 2
+
+
+@pytest.mark.parametrize("reranker_mode", ["offline", "failure", "repeated_picks"])
+async def test_chat_followups_do_not_repeat_session_recommendations(monkeypatch, reranker_mode):
+    await candidates()
+    with get_db() as conn:
+        conn.execute("UPDATE titles SET media_type = 'tv', genres = '[\"Comedy\"]'")
+    svc = OrchestratorService()
+    monkeypatch.setattr(svc, "_parse_query_intent", AsyncMock(return_value={
+        "semantic_vibe": "funny sitcoms for binge watching", "media_type": "tv", "genres": ["Comedy"],
+    }))
+    if reranker_mode != "offline":
+        monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-only")
+        create = mock_chat(svc, {"recommendations": [
+            {"title_id": i, "title": f"Title {i}", "reason": "A funny comedy for your evening."}
+            for i in range(1, 4)
+        ]})
+        if reranker_mode == "failure":
+            create.side_effect = RuntimeError("Simulated provider outage")
+        monkeypatch.setattr(embedding_service, "get_embedding", AsyncMock(
+            return_value=np.zeros(settings.EMBEDDING_DIM, dtype=np.float32)))
+    seen = set()
+    for query in ("suggest funny sitcoms for binge watching", "suggest 3 different series",
+                  "3 other funny sitcoms with an ensemble cast for binge watching"):
+        result = await svc.handle_vibe_query(query, "sitcom-session")
+        ids = {r["title_id"] for r in result["recommendations"]}
+        assert len(ids) == 3
+        assert ids.isdisjoint(seen), f"Repeated recommendations: {ids & seen}"
+        seen.update(ids)
+    exhausted = await svc.handle_vibe_query("three more", "sitcom-session")
+    assert exhausted["recommendations"] == []
+    fresh = await svc.handle_vibe_query("suggest funny sitcoms", "new-session")
+    assert len(fresh["recommendations"]) == 3
+
+
+async def test_chat_excludes_older_picks_before_and_after_discovery(monkeypatch):
+    await candidates()
+    svc = OrchestratorService()
+    with get_db() as conn:
+        conn.execute("""INSERT INTO chat_messages (session_id, role, content, recommended_title_ids)
+                        VALUES ('older-session', 'assistant', 'Earlier picks', '[1, 2, 3]')""")
+        for _ in range(7):
+            conn.execute("""INSERT INTO chat_messages (session_id, role, content)
+                            VALUES ('older-session', 'user', 'Keep the same vibe')""")
+    monkeypatch.setattr(settings, "TMDB_API_KEY", "test-only")
+    monkeypatch.setattr(svc, "_parse_query_intent", AsyncMock(return_value={"semantic_vibe": "romance"}))
+    discovery = AsyncMock(return_value=[1])
+    monkeypatch.setattr(svc, "_discover_and_cache_tmdb", discovery)
+    result = await svc.handle_vibe_query("three different titles", "older-session")
+    # Nine local titles become six eligible titles, triggering discovery. Even
+    # if discovery returns existing titles, the second search must exclude them.
+    discovery.assert_awaited_once()
+    ids = {r["title_id"] for r in result["recommendations"]}
+    assert len(ids) == 3
+    assert ids.isdisjoint({1, 2, 3})
 
 
 async def test_stale_for_you_write_is_not_reused():
