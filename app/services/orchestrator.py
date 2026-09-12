@@ -29,7 +29,7 @@ RECENT_WEIGHT: float = 0.3
 DECK_MIN_VOTE_COUNT: int = 800
 DECK_MIN_VOTE_AVERAGE: float = 6.4
 
-# Initial retrieval tuning; see docs/evaluation/rating-recommendations.md.
+# Initial retrieval tuning balances rating evidence and catalog diversity.
 SAME_MEDIA_SUFFICIENT = 3
 CROSS_MEDIA_MAX_WEIGHT = 0.25
 PIPELINE_VERSION = 3

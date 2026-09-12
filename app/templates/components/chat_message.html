@@ -27,13 +27,13 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h4 class="font-semibold text-[15px] truncate text-notion-ink" title="{{ item.title }}">{{ item.title }}</h4>
                     <div class="flex items-center gap-2 shrink-0">
-                        {% set score = item.imdb_rating or item.vote_average %}
+                        {% set score = item.vote_average %}
                         {% if score and score > 0 %}
-                        <a href="{% if item.imdb_id %}https://www.imdb.com/title/{{ item.imdb_id }}/{% else %}https://www.imdb.com/find/?q={{ item.title | urlencode }}{% endif %}"
+                        <a href="https://www.themoviedb.org/{{ item.media_type }}/{{ item.tmdb_id }}"
                            target="_blank" rel="noopener noreferrer"
                            class="cm-imdb-pill group/imdb"
-                           title="View {{ item.title }} on IMDb (opens in new tab)">
-                            <span class="cm-imdb-logo">IMDb</span>
+                           title="View {{ item.title }} on TMDB (opens in new tab)">
+                            <span class="cm-imdb-logo">TMDB</span>
                             <span class="cm-imdb-score">{{ "%.1f"|format(score) }}</span>
                             <span class="cm-imdb-ten">/10</span>
                             <i data-lucide="external-link" style="width:10px;height:10px;" class="text-notion-stone group-hover/imdb:text-notion-ink transition-colors"></i>

@@ -1,6 +1,8 @@
 venv/
 .env
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 __pycache__/
 *.pyc
@@ -10,3 +12,12 @@ build/
 dist/
 *.egg-info/
 .DS_Store
+.venv/
+.mypy_cache/
+.pytest_tmp*/
+.env.*
+!.env.example
+# Local legacy documentation is not part of the public project.
+/docs/
+/CONTEXT.md
+/linkedin-posts.md

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # OpenRouter
     OPENROUTER_API_KEY: str = Field(default="", description="OpenRouter API Key")
     OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1", description="OpenRouter Base URL")
-    OPENROUTER_MODEL: str = Field(default="openai/gpt-4o", description="Model for reasoning and chat")
+    OPENROUTER_MODEL: str = Field(default="openai/gpt-4o-mini", description="Model for reasoning and chat")
 
     # Embeddings
     EMBEDDING_PROVIDER: Literal["openrouter", "local"] = "openrouter"

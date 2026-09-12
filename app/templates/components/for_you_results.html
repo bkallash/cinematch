@@ -10,13 +10,13 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h4 class="font-semibold text-[15px] truncate text-notion-ink" title="{{ item.title }}">{{ loop.index }}. {{ item.title }}</h4>
                     <div class="flex items-center gap-2 shrink-0">
-                        {% set score = item.imdb_rating or item.vote_average %}
+                        {% set score = item.vote_average %}
                         {% if score and score > 0 %}
-                        <a href="{% if item.imdb_id %}https://www.imdb.com/title/{{ item.imdb_id }}/{% else %}https://www.imdb.com/find/?q={{ item.title | urlencode }}{% endif %}"
+                        <a href="https://www.themoviedb.org/{{ item.media_type }}/{{ item.tmdb_id }}"
                            target="_blank" rel="noopener noreferrer"
                            class="cm-imdb-pill group/imdb"
-                           title="View {{ item.title }} on IMDb (opens in new tab)">
-                            <span class="cm-imdb-logo">IMDb</span>
+                           title="View {{ item.title }} on TMDB (opens in new tab)">
+                            <span class="cm-imdb-logo">TMDB</span>
                             <span class="cm-imdb-score">{{ "%.1f"|format(score) }}</span>
                             <span class="cm-imdb-ten">/10</span>
                             <i data-lucide="external-link" style="width:10px;height:10px;" class="text-notion-stone group-hover/imdb:text-notion-ink transition-colors"></i>
@@ -70,8 +70,8 @@
     {% else %}
     <div class="cm-card p-10 text-center max-w-[640px] mx-auto">
         <p class="cm-eyebrow justify-center">Nothing to suggest</p>
-        <h3 class="cm-h2 mt-2">You've rated everything</h3>
-        <p class="text-sm text-notion-slate mt-2">Add more Titles via Search and come back for fresh picks.</p>
+        <h3 class="cm-h2 mt-2">No suitable picks yet</h3>
+        <p class="text-sm text-notion-slate mt-2">{{ message or 'Add more Titles via Search and come back for fresh picks.' }}</p>
         <a href="/search" class="inline-flex mt-5 px-4 py-2 rounded-lg bg-notion-primary hover:bg-notion-primaryPressed text-white font-medium text-sm">Search Titles</a>
     </div>
     {% endif %}

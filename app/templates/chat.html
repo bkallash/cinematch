@@ -25,7 +25,7 @@
             <span><strong>{{ ratings_count or 0 }}</strong> rated <span class="dot">·</span> <strong>{{ watchlist_count or 0 }}</strong> saved</span>
         </p>
         <h1 class="cm-h1">What should tonight be?</h1>
-        <p class="cm-lede">Describe the vibe. Picks come back grounded in your Taste Dossier, with a reason attached to each Title and IMDb ratings included.</p>
+        <p class="cm-lede">Describe the vibe. Picks come back grounded in your Taste Dossier, with a reason attached to each Title and TMDB audience ratings included.</p>
 
         <!-- Thesis instrument: Hero Vibe Query bar -->
         <form id="chat-form-hero"
@@ -69,7 +69,7 @@
             <div class="cm-card p-5 bg-notion-surfaceSoft/50">
                 <p class="cm-meta mb-1.5">How it works</p>
                 <p class="text-[15px] font-medium text-notion-ink">Say the vibe, get a shortlist</p>
-                <p class="text-sm text-notion-slate mt-1 leading-relaxed">Reference a Title, a mood, or an occasion. The Orchestrator searches your catalog, checks IMDb scores, and reranks against your Dossier.</p>
+                <p class="text-sm text-notion-slate mt-1 leading-relaxed">Reference a Title, a mood, or an occasion. The Orchestrator searches your catalog, considers audience ratings, and reranks against your Dossier.</p>
             </div>
             <div class="cm-card p-5 bg-notion-surfaceSoft/50">
                 <p class="cm-meta mb-1.5">It gets sharper</p>
@@ -140,7 +140,7 @@
             <!-- Loading indicator -->
             <div id="chat-loading" class="htmx-indicator flex items-center gap-3 p-4 bg-notion-surface border border-notion-hairline rounded-xl max-w-md shadow-xs">
                 <div class="w-4 h-4 rounded-full border-2 border-notion-primary border-t-transparent animate-spin shrink-0" aria-hidden="true"></div>
-                <p class="text-sm"><span class="font-medium text-notion-primary">Reading your Dossier…</span> <span class="text-notion-slate">evaluating IMDb ratings & reranking picks</span></p>
+                <p class="text-sm"><span class="font-medium text-notion-primary">Reading your Dossier…</span> <span class="text-notion-slate">finding suitable titles</span></p>
             </div>
 
             <!-- Bottom scroll anchor -->

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv, set_key
 
-DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o"
+DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o-mini"
 
 
 def default_data_dir() -> Path:
@@ -25,6 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--host", default="127.0.0.1", help="Address to listen on.")
     parser.add_argument("--port", type=int, help="Port to listen on (default: APP_PORT or 8000).")
     parser.add_argument("--reload", action="store_true", help="Reload when source files change.")
+    parser.add_argument("--model", help="OpenRouter model ID to use for this run.")
     parser.add_argument(
         "--configure",
         action="store_true",
@@ -60,7 +61,7 @@ def configure_openrouter(env_path: Path) -> None:
     current_model = os.environ.get("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL)
     model = input(f"OpenRouter model [{current_model}]: ").strip() or current_model
 
-    env_path.touch(exist_ok=True)
+    env_path.touch(mode=0o600, exist_ok=True)
     set_key(env_path, "OPENROUTER_API_KEY", api_key)
     set_key(env_path, "OPENROUTER_MODEL", model)
     os.environ["OPENROUTER_API_KEY"] = api_key
@@ -70,13 +71,15 @@ def configure_openrouter(env_path: Path) -> None:
 
 def main() -> None:
     args = build_parser().parse_args()
-    data_dir = args.data_dir or default_data_dir()
+    data_dir = (args.data_dir or default_data_dir()).expanduser().resolve()
     data_dir.mkdir(parents=True, exist_ok=True)
     user_env_path = data_dir / ".env"
 
     # A project-specific .env takes precedence over the saved user configuration.
     load_dotenv(Path.cwd() / ".env")
     load_dotenv(user_env_path)
+    if args.model:
+        os.environ["OPENROUTER_MODEL"] = args.model
     if args.configure or not openrouter_is_configured():
         configure_openrouter(user_env_path)
 
@@ -88,7 +91,7 @@ def main() -> None:
     uvicorn.run(
         "app.main:app",
         host=args.host,
-        port=args.port or settings.APP_PORT,
+        port=args.port if args.port is not None else settings.APP_PORT,
         reload=args.reload,
     )
 
