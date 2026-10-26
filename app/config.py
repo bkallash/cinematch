@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,7 +27,6 @@ class Settings(BaseSettings):
 
     # App Settings
     APP_PORT: int = Field(default=8000)
-    DEBUG: bool = Field(default=True)
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

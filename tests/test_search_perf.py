@@ -1,7 +1,8 @@
 import asyncio
 import time
-from app.database import init_db, get_db
-from app.main import perform_title_search, get_deck_title_by_id
+from app.database import init_db
+from app.services.catalog import search_catalog as perform_title_search
+from app.services.deck import get_deck_title_by_id
 
 async def test_search_speed_and_completeness():
     init_db()

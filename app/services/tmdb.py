@@ -38,9 +38,30 @@ GENRE_MAP = {
 
 GENRE_NAME_TO_ID = {v.lower(): k for k, v in GENRE_MAP.items()}
 GENRE_NAME_TO_ID["sci-fi"] = 878
-GENRE_NAME_TO_ID["science fiction"] = 878
-GENRE_NAME_TO_ID["sci-fi & fantasy"] = 10765
-GENRE_NAME_TO_ID["action & adventure"] = 10759
+
+
+def _year(date_str: Optional[str]) -> Optional[int]:
+    return int(date_str[:4]) if date_str and date_str[:4].isdigit() else None
+
+
+def _parse_item(item: Dict[str, Any], media_type: str) -> Dict[str, Any]:
+    """Normalize a TMDB list/search result into the app's title shape."""
+    is_movie = media_type == "movie"
+    return {
+        "tmdb_id": item["id"],
+        "media_type": media_type,
+        "title": (item.get("title") if is_movie else item.get("name")) or "Untitled",
+        "original_title": item.get("original_title") if is_movie else item.get("original_name"),
+        "release_year": _year(item.get("release_date") if is_movie else item.get("first_air_date")),
+        "overview": item.get("overview") or "",
+        "poster_path": item.get("poster_path"),
+        "backdrop_path": item.get("backdrop_path"),
+        "genres": [GENRE_MAP[gid] for gid in item.get("genre_ids", []) if gid in GENRE_MAP],
+        "vote_average": float(item.get("vote_average", 0.0)),
+        "vote_count": int(item.get("vote_count", 0)),
+        "popularity": float(item.get("popularity", 0.0)),
+    }
+
 
 class TMDBService:
     def __init__(self):
@@ -50,18 +71,29 @@ class TMDBService:
 
     def _get_headers(self) -> Dict[str, str]:
         headers = {"Accept": "application/json"}
-        # Check if API key is a v4 Bearer token (usually ~150-200 chars) or standard v3 key
+        # v4 read tokens are long bearer tokens; v3 keys go in the query string.
         if len(self.api_key) > 50:
             headers["Authorization"] = f"Bearer {self.api_key}"
         return headers
 
     def _get_params(self, extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        params = {}
-        if len(self.api_key) <= 50 and self.api_key:
-            params["api_key"] = self.api_key
-        if extra:
-            params.update(extra)
-        return params
+        params = {"api_key": self.api_key} if 0 < len(self.api_key) <= 50 else {}
+        return {**params, **(extra or {})}
+
+    async def _get(self, client: httpx.AsyncClient, path: str, **params) -> Optional[Dict[str, Any]]:
+        """GET a TMDB endpoint; log and return None on any failure."""
+        try:
+            response = await client.get(f"{self.base_url}/{path}", params=self._get_params(params),
+                                        headers=self._get_headers())
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"TMDB request {path} failed: {type(e).__name__}")
+            return None
+
+    async def _get_once(self, path: str, timeout: float = 10.0, **params) -> Optional[Dict[str, Any]]:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            return await self._get(client, path, **params)
 
     def get_poster_url(self, poster_path: Optional[str]) -> str:
         if not poster_path:
@@ -72,130 +104,38 @@ class TMDBService:
 
     async def search_titles(self, query: str, page: int = 1) -> List[Dict[str, Any]]:
         """Search movies and TV series across TMDB."""
-        if not query or not query.strip():
+        if not query.strip() or not self.api_key:
             return []
-        if not self.api_key:
-            logger.warning("TMDB_API_KEY is not configured.")
-            return []
-
-        url = f"{self.base_url}/search/multi"
-        params = self._get_params({"query": query.strip(), "page": page, "include_adult": False})
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            try:
-                response = await client.get(url, params=params, headers=self._get_headers())
-                response.raise_for_status()
-                data = response.json()
-            except Exception as e:
-                logger.error(f"Error searching TMDB: {e}")
-                return []
-
-        results = []
-        for item in data.get("results", []):
-            media_type = item.get("media_type")
-            if media_type not in ("movie", "tv"):
-                continue
-
-            title_name = item.get("title") if media_type == "movie" else item.get("name")
-            orig_name = item.get("original_title") if media_type == "movie" else item.get("original_name")
-            date_str = item.get("release_date") if media_type == "movie" else item.get("first_air_date")
-
-            release_year = None
-            if date_str and len(date_str) >= 4:
-                try:
-                    release_year = int(date_str[:4])
-                except ValueError:
-                    pass
-
-            genre_ids = item.get("genre_ids", [])
-            genres = [GENRE_MAP[gid] for gid in genre_ids if gid in GENRE_MAP]
-
-            results.append({
-                "tmdb_id": item["id"],
-                "media_type": media_type,
-                "title": title_name or "Untitled",
-                "original_title": orig_name,
-                "release_year": release_year,
-                "overview": item.get("overview") or "",
-                "poster_path": item.get("poster_path"),
-                "backdrop_path": item.get("backdrop_path"),
-                "genres": genres,
-                "vote_average": float(item.get("vote_average", 0.0)),
-                "vote_count": int(item.get("vote_count", 0)),
-                "popularity": float(item.get("popularity", 0.0)),
-            })
-        return results
+        data = await self._get_once("search/multi", query=query.strip(), page=page, include_adult=False) or {}
+        return [_parse_item(item, item["media_type"]) for item in data.get("results", [])
+                if item.get("media_type") in ("movie", "tv")]
 
     async def get_title_details(self, tmdb_id: int, media_type: str) -> Optional[Dict[str, Any]]:
         """Fetch full title details with credits and directors."""
         if not self.api_key:
             return None
+        data = await self._get_once(f"{media_type}/{tmdb_id}", timeout=12.0,
+                                    append_to_response="credits,external_ids")
+        if not data:
+            return None
 
-        endpoint = "movie" if media_type == "movie" else "tv"
-        url = f"{self.base_url}/{endpoint}/{tmdb_id}"
-        params = self._get_params({"append_to_response": "credits,external_ids"})
-
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            try:
-                response = await client.get(url, params=params, headers=self._get_headers())
-                response.raise_for_status()
-                data = response.json()
-            except Exception as e:
-                logger.error(f"Error fetching TMDB details for {media_type}:{tmdb_id}: {e}")
-                return None
-
-        title_name = data.get("title") if media_type == "movie" else data.get("name")
-        orig_name = data.get("original_title") if media_type == "movie" else data.get("original_name")
-        date_str = data.get("release_date") if media_type == "movie" else data.get("first_air_date")
-
-        release_year = None
-        if date_str and len(date_str) >= 4:
-            try:
-                release_year = int(date_str[:4])
-            except ValueError:
-                pass
-
-        genres = [g["name"] for g in data.get("genres", []) if "name" in g]
-
-        credits_data = data.get("credits", {})
-        director_or_creator = None
-
+        crew = data.get("credits", {}).get("crew", [])
         if media_type == "movie":
-            for crew_member in credits_data.get("crew", []):
-                if crew_member.get("job") == "Director":
-                    director_or_creator = crew_member.get("name")
-                    break
+            director_or_creator = next((c.get("name") for c in crew if c.get("job") == "Director"), None)
         else:
             creators = [c.get("name") for c in data.get("created_by", []) if c.get("name")]
-            if creators:
-                director_or_creator = ", ".join(creators)
-            else:
-                for crew_member in credits_data.get("crew", []):
-                    if crew_member.get("job") in ("Executive Producer", "Series Director"):
-                        director_or_creator = crew_member.get("name")
-                        break
+            director_or_creator = ", ".join(creators) or next(
+                (c.get("name") for c in crew if c.get("job") in ("Executive Producer", "Series Director")), None)
 
-        cast_top = [c.get("name") for c in credits_data.get("cast", [])[:5] if c.get("name")]
-        imdb_id = data.get("imdb_id") or data.get("external_ids", {}).get("imdb_id")
-
-        return {
-            "tmdb_id": data["id"],
-            "media_type": media_type,
-            "title": title_name or "Untitled",
-            "original_title": orig_name,
-            "release_year": release_year,
-            "overview": data.get("overview") or "",
-            "poster_path": data.get("poster_path"),
-            "backdrop_path": data.get("backdrop_path"),
-            "genres": genres,
+        title = _parse_item(data, media_type)
+        title.update({
+            "genres": [g["name"] for g in data.get("genres", []) if "name" in g],
             "director_or_creator": director_or_creator,
-            "cast_top": cast_top,
-            "vote_average": float(data.get("vote_average", 0.0)),
-            "vote_count": int(data.get("vote_count", 0)),
-            "popularity": float(data.get("popularity", 0.0)),
-            "imdb_id": imdb_id,
-            "imdb_rating": float(data.get("vote_average", 0.0)),
-        }
+            "cast_top": [c.get("name") for c in data.get("credits", {}).get("cast", [])[:5] if c.get("name")],
+            "imdb_id": data.get("imdb_id") or data.get("external_ids", {}).get("imdb_id"),
+            "imdb_rating": title["vote_average"],
+        })
+        return title
 
     async def get_famous_titles(
         self,
@@ -205,170 +145,58 @@ class TMDBService:
         limit: int = 40,
         start_page: int = 1,
     ) -> List[Dict[str, Any]]:
-        """Fetch universally recognized, well-rated Titles for the Rating Deck.
+        """Fetch widely recognized, well-rated Titles for the Rating Deck.
 
-        Hits TMDB top_rated + popular endpoints for movies and TV, filters out
-        obscure/low-rated long-tail results (which otherwise pollute the Deck
-        after a free-text search caches every lookalike), dedupes, and returns
-        the most-voted candidates first.
-
-        `start_page` sets the first TMDB page fetched per endpoint so Deck
-        refills can walk deeper into the catalog on every call instead of
-        re-fetching pages 1-2 (which would stop yielding fresh Titles and let
-        the Deck complete).
+        Walks top_rated + popular for movies and TV starting at `start_page`, so
+        successive Deck refills reach deeper into the catalog instead of
+        re-fetching the same first pages.
         """
         if not self.api_key:
             return []
 
-        endpoints = [
-            ("movie", "top_rated"),
-            ("movie", "popular"),
-            ("tv", "top_rated"),
-            ("tv", "popular"),
-        ]
-
         seen: set[tuple[int, str]] = set()
         collected: List[Dict[str, Any]] = []
-
         async with httpx.AsyncClient(timeout=10.0) as client:
-            for media_type, category in endpoints:
-                endpoint = "movie" if media_type == "movie" else "tv"
-                for page in range(start_page, start_page + pages_per_endpoint):
-                    url = f"{self.base_url}/{endpoint}/{category}"
-                    params = self._get_params({
-                        "page": page,
-                        "include_adult": False,
-                    })
-                    try:
-                        response = await client.get(url, params=params, headers=self._get_headers())
-                        response.raise_for_status()
-                        data = response.json()
-                    except Exception as e:
-                        logger.error(f"Error fetching TMDB {endpoint}/{category} p{page}: {e}")
-                        break
-
-                    for item in data.get("results", []):
-                        tmdb_id = item.get("id")
-                        if tmdb_id is None:
-                            continue
-                        key = (tmdb_id, media_type)
-                        if key in seen:
-                            continue
-                        seen.add(key)
-
-                        vote_average = float(item.get("vote_average", 0.0))
-                        vote_count = int(item.get("vote_count", 0))
-                        effective_min_vote_count = max(400, min_vote_count - (page // 5) * 50)
-                        if vote_count < effective_min_vote_count or vote_average < min_vote_average:
-                            continue
-
-                        title_name = item.get("title") if media_type == "movie" else item.get("name")
-                        date_str = item.get("release_date") if media_type == "movie" else item.get("first_air_date")
-                        release_year = None
-                        if date_str and len(date_str) >= 4:
-                            try:
-                                release_year = int(date_str[:4])
-                            except ValueError:
-                                pass
-
-                        genre_ids = item.get("genre_ids", [])
-                        genres = [GENRE_MAP[gid] for gid in genre_ids if gid in GENRE_MAP]
-
-                        collected.append({
-                            "tmdb_id": tmdb_id,
-                            "media_type": media_type,
-                            "title": title_name or "Untitled",
-                            "original_title": item.get("original_title") or item.get("original_name"),
-                            "release_year": release_year,
-                            "overview": item.get("overview") or "",
-                            "poster_path": item.get("poster_path"),
-                            "backdrop_path": item.get("backdrop_path"),
-                            "genres": genres,
-                            "vote_average": vote_average,
-                            "vote_count": vote_count,
-                            "popularity": float(item.get("popularity", 0.0)),
-                        })
-
-                    # Stop paging this endpoint when TMDB reports last page
-                    if page >= int(data.get("total_pages", page)):
-                        break
+            for media_type in ("movie", "tv"):
+                for category in ("top_rated", "popular"):
+                    for page in range(start_page, start_page + pages_per_endpoint):
+                        data = await self._get(client, f"{media_type}/{category}", page=page, include_adult=False)
+                        if data is None:
+                            break
+                        # Deeper pages relax the vote floor a little, never below 400.
+                        min_votes = max(400, min_vote_count - (page // 5) * 50)
+                        for item in data.get("results", []):
+                            if item.get("id") is None or (item["id"], media_type) in seen:
+                                continue
+                            seen.add((item["id"], media_type))
+                            title = _parse_item(item, media_type)
+                            if title["vote_count"] >= min_votes and title["vote_average"] >= min_vote_average:
+                                collected.append(title)
+                        if page >= int(data.get("total_pages", page)):
+                            break
 
         collected.sort(key=lambda x: (x["vote_count"], x["popularity"]), reverse=True)
         return collected[:limit]
 
-    async def get_title_recommendations(
-        self,
-        tmdb_id: int,
-        media_type: str = "movie",
-        limit: int = 15
-    ) -> List[Dict[str, Any]]:
+    async def get_title_recommendations(self, tmdb_id: int, media_type: str = "movie",
+                                        limit: int = 15) -> List[Dict[str, Any]]:
         """Fetch recommended titles from TMDB based on a specific title."""
         if not self.api_key or not tmdb_id:
             return []
-
-        endpoint = "movie" if media_type == "movie" else "tv"
-        url = f"{self.base_url}/{endpoint}/{tmdb_id}/recommendations"
-        params = self._get_params({"page": 1})
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            try:
-                response = await client.get(url, params=params, headers=self._get_headers())
-                response.raise_for_status()
-                data = response.json()
-            except Exception as e:
-                logger.error(f"Error fetching TMDB recommendations for {media_type}:{tmdb_id}: {e}")
-                return []
-
-        results = []
-        for item in data.get("results", [])[:limit]:
-            title_name = item.get("title") if media_type == "movie" else item.get("name")
-            date_str = item.get("release_date") if media_type == "movie" else item.get("first_air_date")
-            release_year = None
-            if date_str and len(date_str) >= 4:
-                try:
-                    release_year = int(date_str[:4])
-                except ValueError:
-                    pass
-
-            genre_ids = item.get("genre_ids", [])
-            genres = [GENRE_MAP[gid] for gid in genre_ids if gid in GENRE_MAP]
-
-            results.append({
-                "tmdb_id": item["id"],
-                "media_type": media_type,
-                "title": title_name or "Untitled",
-                "original_title": item.get("original_title") or item.get("original_name"),
-                "release_year": release_year,
-                "overview": item.get("overview") or "",
-                "poster_path": item.get("poster_path"),
-                "backdrop_path": item.get("backdrop_path"),
-                "genres": genres,
-                "vote_average": float(item.get("vote_average", 0.0)),
-                "vote_count": int(item.get("vote_count", 0)),
-                "popularity": float(item.get("popularity", 0.0)),
-            })
-        return results
+        data = await self._get_once(f"{media_type}/{tmdb_id}/recommendations", page=1) or {}
+        return [_parse_item(item, media_type) for item in data.get("results", [])[:limit]]
 
     async def find_person_titles(self, name: str, media_type: str) -> List[Dict[str, Any]]:
         """Find acting/directing credits before fetching full title details."""
         if not self.api_key:
             return []
         async with httpx.AsyncClient(timeout=10.0) as client:
-            try:
-                response = await client.get(f"{self.base_url}/search/person",
-                                            params=self._get_params({"query": name}), headers=self._get_headers())
-                response.raise_for_status()
-                people = response.json().get("results", [])
-                person = next((p for p in people if p["name"].casefold() == name.strip().casefold()), None)
-                if person is None:
-                    return []
-                response = await client.get(f"{self.base_url}/person/{person['id']}/combined_credits",
-                                            params=self._get_params(), headers=self._get_headers())
-                response.raise_for_status()
-                credits = response.json()
-            except Exception as exc:
-                logger.error("Person discovery failed: %s", type(exc).__name__)
+            people = (await self._get(client, "search/person", query=name) or {}).get("results", [])
+            person = next((p for p in people if p["name"].casefold() == name.strip().casefold()), None)
+            if person is None:
                 return []
+            credits = await self._get(client, f"person/{person['id']}/combined_credits") or {}
+
         results = {}
         for role in ("cast", "crew"):
             for item in credits.get(role, []):
@@ -376,11 +204,11 @@ class TMDBService:
                     continue
                 if role == "crew" and item.get("job") not in ("Director", "Creator"):
                     continue
-                date = item.get("release_date") or item.get("first_air_date") or ""
+                date = item.get("release_date") or item.get("first_air_date")
                 title = results.setdefault(item["id"], {
                     "tmdb_id": item["id"], "media_type": media_type,
                     "title": item.get("title") or item.get("name") or "Untitled",
-                    "release_year": int(date[:4]) if date[:4].isdigit() else None,
+                    "release_year": _year(date),
                     "genres": [GENRE_MAP[g] for g in item.get("genre_ids", []) if g in GENRE_MAP],
                     "overview": item.get("overview", ""), "poster_path": item.get("poster_path"),
                     "popularity": item.get("popularity", 0), "vote_average": item.get("vote_average", 0),
@@ -408,65 +236,20 @@ class TMDBService:
         if not self.api_key:
             return []
 
-        endpoint = "movie" if media_type == "movie" else "tv"
-        url = f"{self.base_url}/discover/{endpoint}"
-        extra_params: Dict[str, Any] = {
-            "sort_by": sort_by,
-            "page": page,
-            "vote_count.gte": vote_count_gte,
-            "include_adult": False
-        }
-
+        params: Dict[str, Any] = {"sort_by": sort_by, "page": page,
+                                  "vote_count.gte": vote_count_gte, "include_adult": False}
         if with_genres:
-            extra_params["with_genres"] = with_genres
+            params["with_genres"] = with_genres
         if vote_average_gte:
-            extra_params["vote_average.gte"] = vote_average_gte
+            params["vote_average.gte"] = vote_average_gte
+        date_field = "primary_release_date" if media_type == "movie" else "first_air_date"
         if year_min:
-            date_field = "primary_release_date.gte" if media_type == "movie" else "first_air_date.gte"
-            extra_params[date_field] = f"{year_min}-01-01"
+            params[f"{date_field}.gte"] = f"{year_min}-01-01"
         if year_max:
-            date_field = "primary_release_date.lte" if media_type == "movie" else "first_air_date.lte"
-            extra_params[date_field] = f"{year_max}-12-31"
+            params[f"{date_field}.lte"] = f"{year_max}-12-31"
 
-        params = self._get_params(extra_params)
+        data = await self._get_once(f"discover/{media_type}", **params) or {}
+        return [_parse_item(item, media_type) for item in data.get("results", [])[:limit]]
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            try:
-                response = await client.get(url, params=params, headers=self._get_headers())
-                response.raise_for_status()
-                data = response.json()
-            except Exception as e:
-                logger.error(f"Error discovering TMDB {media_type}: {e}")
-                return []
-
-        results = []
-        for item in data.get("results", [])[:limit]:
-            title_name = item.get("title") if media_type == "movie" else item.get("name")
-            date_str = item.get("release_date") if media_type == "movie" else item.get("first_air_date")
-            release_year = None
-            if date_str and len(date_str) >= 4:
-                try:
-                    release_year = int(date_str[:4])
-                except ValueError:
-                    pass
-
-            genre_ids = item.get("genre_ids", [])
-            genres = [GENRE_MAP[gid] for gid in genre_ids if gid in GENRE_MAP]
-
-            results.append({
-                "tmdb_id": item["id"],
-                "media_type": media_type,
-                "title": title_name or "Untitled",
-                "original_title": item.get("original_title") or item.get("original_name"),
-                "release_year": release_year,
-                "overview": item.get("overview") or "",
-                "poster_path": item.get("poster_path"),
-                "backdrop_path": item.get("backdrop_path"),
-                "genres": genres,
-                "vote_average": float(item.get("vote_average", 0.0)),
-                "vote_count": int(item.get("vote_count", 0)),
-                "popularity": float(item.get("popularity", 0.0)),
-            })
-        return results
 
 tmdb_service = TMDBService()

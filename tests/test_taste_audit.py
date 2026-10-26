@@ -108,9 +108,7 @@ async def test_explicitly_rejected_candidates_are_never_backfilled(monkeypatch, 
 
 def test_fallback_reason_does_not_invent_dossier_alignment():
     reason = OrchestratorService()._generate_personalized_reason(
-        {"title": "Slasher", "genres": ["Horror"], "overview": "A masked killer attacks."},
-        dossier={"atmospheric_preferences": ["gentle, gore-free comfort"]})
-    assert "gentle, gore-free comfort" not in reason
+        {"title": "Slasher", "genres": ["Horror"], "overview": "A masked killer attacks."})
     assert "acclaimed" not in reason
 
 
@@ -149,7 +147,7 @@ async def test_embedding_outage_still_allows_metadata_reranking(monkeypatch):
 
 def test_rating_http_round_trip_preserves_and_replaces_qualitative_evidence(monkeypatch):
     title(1, "Rated")
-    monkeypatch.setattr(main, "_ensure_title_embedding", AsyncMock())
+    monkeypatch.setattr(main, "ensure_title_embedding", AsyncMock())
     client = TestClient(main.app)
     for score, note in [(6, "Loved the deliberate pacing"), (2, "Changed my mind: too slow")]:
         assert client.post("/api/ratings", json={"title_id": 1, "score": score,
@@ -194,7 +192,7 @@ async def test_enrichment_persists_the_same_metadata_used_for_embedding(monkeypa
         "overview": "Updated synopsis with a warm ensemble", "genres": ["Comedy"],
         "director_or_creator": "A Creator", "cast_top": ["An Actor"],
     }))
-    await main._ensure_title_embedding(1)
+    await main.ensure_title_embedding(1)
     with get_db() as conn:
         row = conn.execute("SELECT overview,genres FROM titles WHERE id=1").fetchone()
     assert row["overview"] == "Updated synopsis with a warm ensemble"

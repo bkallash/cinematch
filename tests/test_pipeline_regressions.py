@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock
 import numpy as np
 import httpx
 import pytest
-import app.main as main_module
+import app.services.deck as deck
 
 from app.config import settings
 from app.database import get_db, init_db
@@ -109,7 +109,7 @@ async def test_deck_suggestion_rejects_unrated_obscure_candidates():
             )
         conn.execute("INSERT INTO ratings (title_id, score) SELECT id, 6 FROM titles WHERE tmdb_id IN (91001, 91002)")
 
-    suggestion = await OrchestratorService().get_deck_suggestion()
+    suggestion = await deck.get_deck_suggestion()
 
     assert suggestion is not None
     assert suggestion["title"] == "Established Drama"
@@ -126,9 +126,9 @@ async def test_deck_never_falls_back_to_obscure_unrated_title(monkeypatch):
         known_id = conn.execute("SELECT id FROM titles WHERE tmdb_id=92002").fetchone()[0]
         conn.execute("INSERT INTO skipped_titles (title_id) VALUES (?)", (known_id,))
 
-    monkeypatch.setattr(main_module, "_get_and_increment_deck_serve_count", lambda: 1)
-    monkeypatch.setattr(main_module, "schedule_deck_refill_if_needed", lambda: None)
-    result = await main_module.get_next_deck_title()
+    monkeypatch.setattr(deck, "_get_and_increment_deck_serve_count", lambda: 1)
+    monkeypatch.setattr(deck, "schedule_deck_refill_if_needed", lambda: None)
+    result = await deck.get_next_deck_title()
 
     assert result is not None
     assert result["title"] == "Known Skipped Movie"
@@ -280,7 +280,7 @@ async def test_incompatible_vectors_excluded_and_rebuilt():
         conn.execute("UPDATE titles SET embedding = ?, embedding_model = 'old-model' WHERE id = 2", (np.ones(2, dtype=np.float32).tobytes(),))
         conn.execute("UPDATE titles SET embedding_model = 'old-model' WHERE id = 3")
     svc = OrchestratorService()
-    assert svc._build_taste_profile()["taste_vector"].shape == (settings.EMBEDDING_DIM,)
+    assert svc.build_taste_signal().taste_vector.shape == (settings.EMBEDDING_DIM,)
     result = await svc._search_local_candidates({"semantic_vibe": "romance"})
     assert 3 not in [r["title_id"] for r in result]
     await seed_starter_catalog()

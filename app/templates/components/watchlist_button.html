@@ -1,0 +1,8 @@
+{% set label = "Saved to Watchlist" if in_watchlist else "Save to Watchlist" %}
+<button type="button"
+        hx-post="/api/watchlist/toggle/{{ title_id }}"
+        hx-swap="outerHTML"
+        aria-label="{{ label }}" title="{{ label }}"
+        class="p-2 rounded-lg border border-notion-hairline text-notion-slate hover:bg-notion-surface">
+    <i data-lucide="bookmark" style="width:15px;height:15px;" class="{% if in_watchlist %}fill-notion-primary text-notion-primary{% endif %}"></i>
+</button>

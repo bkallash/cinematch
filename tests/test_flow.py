@@ -1,9 +1,7 @@
 import asyncio
-import os
 import json
 from app.database import init_db, get_db
 from app.services.seeder import seed_starter_catalog
-from app.services.embeddings import embedding_service
 from app.services.orchestrator import orchestrator_service
 from app.services.taste_dossier import taste_dossier_service
 

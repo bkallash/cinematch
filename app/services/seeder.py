@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 
-from app.database import get_db
+from app.database import get_db, upsert_title
 from app.services.embeddings import embedding_service
 
 logger = logging.getLogger(__name__)
@@ -17,20 +17,7 @@ async def seed_starter_catalog():
     titles = json.loads(catalog_path.read_text(encoding="utf-8"))
     with get_db() as conn:
         for item in titles:
-            conn.execute("""
-                INSERT INTO titles (
-                    tmdb_id, media_type, title, original_title, release_year, overview,
-                    poster_path, backdrop_path, genres, director_or_creator, cast_top,
-                    vote_average, vote_count, popularity
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(tmdb_id, media_type) DO UPDATE SET poster_path = excluded.poster_path
-            """, (
-                item["tmdb_id"], item["media_type"], item["title"], item.get("original_title"),
-                item.get("release_year"), item.get("overview"), item.get("poster_path"),
-                item.get("backdrop_path"), json.dumps(item.get("genres") or []),
-                item.get("director_or_creator"), json.dumps(item.get("cast_top") or []),
-                item.get("vote_average", 0.0), item.get("vote_count", 0), item.get("popularity", 0.0),
-            ))
+            upsert_title(conn, item, update=("poster_path",))
         # Include dynamically discovered titles when changing embedding models too.
         pending = conn.execute("""
             SELECT * FROM titles
@@ -41,12 +28,7 @@ async def seed_starter_catalog():
 
     for start in range(0, len(pending), 64):
         batch = pending[start:start + 64]
-        texts = []
-        for row in batch:
-            item = dict(row)
-            item["genres"] = json.loads(item["genres"] or "[]")
-            item["cast_top"] = json.loads(item["cast_top"] or "[]")
-            texts.append(embedding_service.build_title_embedding_text(item))
+        texts = [embedding_service.build_title_embedding_text(dict(row)) for row in batch]
         try:
             vectors = await embedding_service.get_embeddings(texts)
         except Exception:

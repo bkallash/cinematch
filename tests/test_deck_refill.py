@@ -1,14 +1,12 @@
 import asyncio
-import json
 from app.database import get_db, init_db
-from app.main import (
+from app.services.catalog import format_title_row
+from app.services.deck import (
+    get_deck_suggestion,
     get_next_deck_title,
     refill_deck_with_preferences_and_famous,
-    schedule_deck_refill_if_needed,
-    format_title_row,
     DECK_SUGGESTION_CADENCE,
 )
-from app.services.orchestrator import orchestrator_service
 
 
 async def test_deck_returns_title():
@@ -29,7 +27,7 @@ async def test_deck_suggestion_cadence_and_metadata():
     init_db()
 
     # Get a personalized suggestion directly to check structure
-    suggestion = await orchestrator_service.get_deck_suggestion()
+    suggestion = await get_deck_suggestion()
     if suggestion:
         assert suggestion["is_suggestion"] is True
         assert suggestion["match_score"] is not None

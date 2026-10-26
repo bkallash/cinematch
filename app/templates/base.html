@@ -109,9 +109,7 @@
             </nav>
 
             <div id="nav-stats" hx-get="/api/stats" hx-trigger="load, ratingUpdated from:body" class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-wider text-notion-steel shrink-0" aria-live="polite">
-                <span class="flex items-center gap-1.5"><i data-lucide="star" style="width:13px;height:13px;" class="text-notion-primary"></i><strong id="nav-ratings-count" class="text-notion-ink font-medium">{{ ratings_count or 0 }}</strong> rated</span>
-                <span class="text-notion-hairlineStrong" aria-hidden="true">·</span>
-                <span class="flex items-center gap-1.5"><i data-lucide="bookmark" style="width:13px;height:13px;" class="text-notion-purple"></i><strong id="nav-watchlist-count" class="text-notion-ink font-medium">{{ watchlist_count or 0 }}</strong> saved</span>
+                {% include "components/nav_stats.html" %}
             </div>
         </div>
     </header>

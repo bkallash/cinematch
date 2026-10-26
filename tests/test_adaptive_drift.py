@@ -1,5 +1,4 @@
 import asyncio
-import json
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -13,6 +12,7 @@ from app.database import init_db, get_db
 from app.services.orchestrator import orchestrator_service
 from app.services.taste_dossier import taste_dossier_service
 from app.main import app
+from app.services.deck import get_deck_suggestion
 
 
 @pytest.fixture(autouse=True)
@@ -181,7 +181,7 @@ async def test_deck_suggestion_alignment():
                 VALUES (?, 6, '[]', 'Loved comedy', ?, ?)
             """, (t["id"], recent_time, recent_time))
 
-    suggestion = await orchestrator_service.get_deck_suggestion()
+    suggestion = await get_deck_suggestion()
     assert suggestion is not None, "Expected personalized deck suggestion for user with 3 ratings"
     assert suggestion["is_suggestion"] is True
     assert 75 <= suggestion["match_score"] <= 98

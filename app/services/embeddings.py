@@ -93,15 +93,4 @@ class EmbeddingService:
         """Convert SQLite BLOB bytes back to numpy array."""
         return np.frombuffer(blob, dtype=np.float32)
 
-    @staticmethod
-    def cosine_similarity(query_vec: np.ndarray, doc_matrix: np.ndarray) -> np.ndarray:
-        """
-        Compute cosine similarities between a normalized query vector (D,)
-        and a normalized document matrix (N, D).
-        Returns a 1D array of scores in [-1, 1].
-        """
-        if doc_matrix.ndim == 1:
-            return np.array([float(np.dot(query_vec, doc_matrix))])
-        return np.dot(doc_matrix, query_vec)
-
 embedding_service = EmbeddingService()

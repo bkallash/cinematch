@@ -2,11 +2,18 @@ import sqlite3
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any, Iterable
 from contextlib import contextmanager
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+TITLE_COLUMNS = (
+    "tmdb_id", "media_type", "title", "original_title", "release_year", "overview",
+    "poster_path", "backdrop_path", "genres", "director_or_creator", "cast_top",
+    "vote_average", "vote_count", "popularity", "imdb_id", "imdb_rating",
+    "embedding", "embedding_dim", "embedding_model",
+)
 
 def parse_utc_timestamp(ts: Any) -> Optional[datetime]:
     """Safely parse SQLite or ISO timestamp string to timezone-aware UTC datetime."""
@@ -21,7 +28,7 @@ def parse_utc_timestamp(ts: Any) -> Optional[datetime]:
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt
-    except Exception:
+    except ValueError:
         return None
 
 def get_db_connection() -> sqlite3.Connection:
@@ -42,6 +49,45 @@ def get_db():
         raise
     finally:
         conn.close()
+
+
+def upsert_title(conn: sqlite3.Connection, item: Dict[str, Any], embedding: Optional[tuple] = None,
+                 update: Iterable[str] = ()) -> int:
+    """Insert a TMDB-shaped title dict and return its row id.
+
+    `embedding` is (blob, dim, model_key). On an existing (tmdb_id, media_type),
+    only the columns named in `update` are overwritten.
+    """
+    blob, dim, model = embedding or (None, 0, None)
+    values = (
+        item["tmdb_id"], item["media_type"], item["title"], item.get("original_title"),
+        item.get("release_year"), item.get("overview"), item.get("poster_path"),
+        item.get("backdrop_path"), json.dumps(item.get("genres") or []),
+        item.get("director_or_creator"), json.dumps(item.get("cast_top") or []),
+        item.get("vote_average", 0.0), item.get("vote_count", 0), item.get("popularity", 0.0),
+        item.get("imdb_id"), item.get("imdb_rating") or item.get("vote_average", 0.0),
+        blob, dim, model,
+    )
+    update = list(update)
+    conflict = (f"DO UPDATE SET {', '.join(f'{c} = excluded.{c}' for c in update)}" if update else "DO NOTHING")
+    conn.execute(f"""
+        INSERT INTO titles ({", ".join(TITLE_COLUMNS)}) VALUES ({", ".join("?" * len(TITLE_COLUMNS))})
+        ON CONFLICT(tmdb_id, media_type) {conflict}
+    """, values)
+    return conn.execute("SELECT id FROM titles WHERE tmdb_id = ? AND media_type = ?",
+                        (item["tmdb_id"], item["media_type"])).fetchone()[0]
+
+
+def _add_missing_columns(conn: sqlite3.Connection, table: str, columns: Dict[str, str]) -> set:
+    """Add columns that older databases lack; return the names that were added."""
+    existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    added = set()
+    for name, ddl in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+            added.add(name)
+    return added
+
 
 def init_db():
     """Create tables and indexes if they do not exist."""
@@ -67,11 +113,11 @@ def init_db():
             imdb_rating REAL,
             embedding BLOB,                         -- float32 numpy array bytes
             embedding_dim INTEGER DEFAULT 0,
+            embedding_model TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(tmdb_id, media_type)
         );
 
-        CREATE INDEX IF NOT EXISTS idx_titles_tmdb ON titles(tmdb_id, media_type);
         CREATE INDEX IF NOT EXISTS idx_titles_popularity ON titles(popularity DESC);
         CREATE INDEX IF NOT EXISTS idx_titles_vote_count ON titles(vote_count DESC);
         CREATE INDEX IF NOT EXISTS idx_titles_title ON titles(title COLLATE NOCASE);
@@ -87,7 +133,6 @@ def init_db():
             UNIQUE(title_id)
         );
 
-        CREATE INDEX IF NOT EXISTS idx_ratings_title ON ratings(title_id);
         CREATE INDEX IF NOT EXISTS idx_ratings_score ON ratings(score);
 
         CREATE TABLE IF NOT EXISTS watchlist (
@@ -98,16 +143,12 @@ def init_db():
             UNIQUE(title_id)
         );
 
-        CREATE INDEX IF NOT EXISTS idx_watchlist_title ON watchlist(title_id);
-
         CREATE TABLE IF NOT EXISTS skipped_titles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title_id INTEGER NOT NULL REFERENCES titles(id) ON DELETE CASCADE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(title_id)
         );
-
-        CREATE INDEX IF NOT EXISTS idx_skipped_title ON skipped_titles(title_id);
 
         CREATE TABLE IF NOT EXISTS for_you_skips (
             user_id TEXT NOT NULL DEFAULT 'default_user',
@@ -144,7 +185,8 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS deck_refill_state (
             id INTEGER PRIMARY KEY CHECK(id = 1),
-            next_page INTEGER NOT NULL DEFAULT 1
+            next_page INTEGER NOT NULL DEFAULT 1,
+            serve_count INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS for_you_cache (
@@ -159,12 +201,11 @@ def init_db():
             ratings_revision INTEGER NOT NULL DEFAULT -1,
             requested_limit INTEGER NOT NULL DEFAULT 0,
             pipeline_version INTEGER NOT NULL DEFAULT 0,
+            embedding_key TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, media_type)
         );
-
-        CREATE INDEX IF NOT EXISTS idx_for_you_cache_user_media ON for_you_cache(user_id, media_type);
         """)
 
         # Ensure a default taste dossier row exists
@@ -178,15 +219,24 @@ def init_db():
             VALUES (1, 1)
         """)
 
-        # Safely migrate titles table for existing databases
-        existing_cols = [c[1] for c in conn.execute("PRAGMA table_info(titles)").fetchall()]
-        if "imdb_id" not in existing_cols:
-            conn.execute("ALTER TABLE titles ADD COLUMN imdb_id TEXT")
-        if "imdb_rating" not in existing_cols:
-            conn.execute("ALTER TABLE titles ADD COLUMN imdb_rating REAL")
-        if "embedding_model" not in existing_cols:
-            conn.execute("ALTER TABLE titles ADD COLUMN embedding_model TEXT")
+        # Migrate databases created by older releases.
+        if "embedding_model" in _add_missing_columns(conn, "titles", {
+            "imdb_id": "TEXT", "imdb_rating": "REAL", "embedding_model": "TEXT",
+        }):
             conn.execute("DELETE FROM for_you_cache")
+        _add_missing_columns(conn, "for_you_cache", {
+            "last_rated_at": "TIMESTAMP",
+            "ratings_revision": "INTEGER NOT NULL DEFAULT -1",
+            "requested_limit": "INTEGER NOT NULL DEFAULT 0",
+            "pipeline_version": "INTEGER NOT NULL DEFAULT 0",
+            "embedding_key": "TEXT",
+        })
+        _add_missing_columns(conn, "taste_dossiers", {"evidence_version": "INTEGER NOT NULL DEFAULT 0"})
+        _add_missing_columns(conn, "deck_refill_state", {"serve_count": "INTEGER NOT NULL DEFAULT 0"})
+        # Older releases created indexes that duplicate UNIQUE constraints.
+        for index in ("idx_titles_tmdb", "idx_ratings_title", "idx_watchlist_title",
+                      "idx_skipped_title", "idx_for_you_cache_user_media"):
+            conn.execute(f"DROP INDEX IF EXISTS {index}")
 
         # A monotonic revision catches same-second edits and writes during synthesis.
         conn.executescript("""
@@ -204,23 +254,5 @@ def init_db():
                     DELETE FROM for_you_cache;
                 END
             """)
-
-        # Safely migrate for_you_cache table for existing databases
-        existing_cache_cols = [c[1] for c in conn.execute("PRAGMA table_info(for_you_cache)").fetchall()]
-        if "last_rated_at" not in existing_cache_cols:
-            conn.execute("ALTER TABLE for_you_cache ADD COLUMN last_rated_at TIMESTAMP")
-        if "ratings_revision" not in existing_cache_cols:
-            conn.execute("ALTER TABLE for_you_cache ADD COLUMN ratings_revision INTEGER NOT NULL DEFAULT -1")
-        if "requested_limit" not in existing_cache_cols:
-            conn.execute("ALTER TABLE for_you_cache ADD COLUMN requested_limit INTEGER NOT NULL DEFAULT 0")
-        if "pipeline_version" not in existing_cache_cols:
-            conn.execute("ALTER TABLE for_you_cache ADD COLUMN pipeline_version INTEGER NOT NULL DEFAULT 0")
-
-        if "embedding_key" not in existing_cache_cols:
-            conn.execute("ALTER TABLE for_you_cache ADD COLUMN embedding_key TEXT")
-
-        dossier_cols = {c[1] for c in conn.execute("PRAGMA table_info(taste_dossiers)")}
-        if "evidence_version" not in dossier_cols:
-            conn.execute("ALTER TABLE taste_dossiers ADD COLUMN evidence_version INTEGER NOT NULL DEFAULT 0")
 
         logger.info("Database initialized successfully.")

@@ -7,8 +7,19 @@ from openai import AsyncOpenAI
 from app.config import settings
 from app.database import get_db, parse_utc_timestamp
 from app.models.schemas import DossierContent
+from app.services.llm import complete_json, create_client
 
 logger = logging.getLogger(__name__)
+
+DOSSIER_LISTS = ("core_loves", "deal_breakers", "creator_affinities", "atmospheric_preferences", "narrative_tropes")
+
+
+def _dossier(user_id: str, summary: str, ratings_count: int, is_dirty: bool = False,
+             updated_at=None, **lists) -> Dict[str, Any]:
+    return {"user_id": user_id, **{key: lists.get(key, []) for key in DOSSIER_LISTS},
+            "full_summary": summary, "ratings_count_at_synthesis": ratings_count,
+            "is_dirty": is_dirty, "updated_at": updated_at}
+
 
 def select_rating_evidence(ratings, limit=200):
     """Keep recent evidence plus older favorites, dislikes and qualified ratings."""
@@ -57,14 +68,7 @@ class TasteDossierService:
         self._synthesis_lock = asyncio.Lock()
 
     def _get_client(self) -> AsyncOpenAI:
-        if self._client is None:
-            api_key = settings.OPENROUTER_API_KEY or "dummy_key_for_init"
-            self._client = AsyncOpenAI(
-                api_key=api_key,
-                base_url=settings.OPENROUTER_BASE_URL,
-                timeout=30.0,
-                max_retries=1,
-            )
+        self._client = self._client or create_client()
         return self._client
 
     @staticmethod
@@ -73,23 +77,16 @@ class TasteDossierService:
         dt = parse_utc_timestamp(ts_str)
         if dt is None:
             return "rated long ago"
-        try:
-            now = datetime.now(timezone.utc)
-            days = max(0, int((now - dt).total_seconds() // 86400))
-            if days == 0:
-                return "rated today"
-            elif days == 1:
-                return "rated 1 day ago"
-            elif days < 30:
-                return f"rated {days} days ago"
-            elif days < 365:
-                months = max(1, round(days / 30.4))
-                return f"rated {months} month{'s' if months != 1 else ''} ago"
-            else:
-                years = max(1, round(days / 365.25))
-                return f"rated {years} year{'s' if years != 1 else ''} ago"
-        except Exception:
-            return "rated long ago"
+        days = max(0, int((datetime.now(timezone.utc) - dt).total_seconds() // 86400))
+        if days == 0:
+            return "rated today"
+        if days < 30:
+            count, unit = days, "day"
+        elif days < 365:
+            count, unit = max(1, round(days / 30.4)), "month"
+        else:
+            count, unit = max(1, round(days / 365.25)), "year"
+        return f"rated {count} {unit}{'s' if count != 1 else ''} ago"
 
     @staticmethod
     def mark_dirty(user_id: str = "default_user"):
@@ -125,53 +122,21 @@ class TasteDossierService:
         ratings_count = len(ratings)
 
         if row and not row["is_dirty"] and row["evidence_version"] == 1 and not force and ratings_count == row["ratings_count_at_synthesis"]:
-            return {
-                "user_id": user_id,
-                "core_loves": json.loads(row["core_loves"] or "[]"),
-                "deal_breakers": json.loads(row["deal_breakers"] or "[]"),
-                "creator_affinities": json.loads(row["creator_affinities"] or "[]"),
-                "atmospheric_preferences": json.loads(row["atmospheric_preferences"] or "[]"),
-                "narrative_tropes": json.loads(row["narrative_tropes"] or "[]"),
-                "full_summary": row["full_summary"] or "",
-                "ratings_count_at_synthesis": row["ratings_count_at_synthesis"],
-                "is_dirty": False,
-                "updated_at": row["updated_at"]
-            }
+            return _dossier(user_id, row["full_summary"] or "", row["ratings_count_at_synthesis"],
+                            updated_at=row["updated_at"],
+                            **{key: json.loads(row[key] or "[]") for key in DOSSIER_LISTS})
 
-        # If less than 3 ratings, use a friendly starter summary without calling LLM
         if ratings_count < 3:
-            summary = (
+            return _dossier(user_id, (
                 f"You have logged {ratings_count} rating{'s' if ratings_count != 1 else ''} so far. "
                 "CineMatch needs at least 3 ratings to unlock deep pattern analysis. "
                 "Rate a few more movies or series in the Rating Deck or Search to synthesize your taste dossier!"
-            )
-            return {
-                "user_id": user_id,
-                "core_loves": [],
-                "deal_breakers": [],
-                "creator_affinities": [],
-                "atmospheric_preferences": [],
-                "narrative_tropes": [],
-                "full_summary": summary,
-                "ratings_count_at_synthesis": ratings_count,
-                "is_dirty": False,
-                "updated_at": None
-            }
+            ), ratings_count)
 
         if not settings.OPENROUTER_API_KEY:
             logger.warning("OPENROUTER_API_KEY not set. Cannot synthesize taste dossier with the configured LLM.")
-            return {
-                "user_id": user_id,
-                "core_loves": [],
-                "deal_breakers": [],
-                "creator_affinities": [],
-                "atmospheric_preferences": [],
-                "narrative_tropes": [],
-                "full_summary": f"Your {ratings_count} ratings are saved. AI taste analysis is unavailable until an API key is configured.",
-                "ratings_count_at_synthesis": ratings_count,
-                "is_dirty": False,
-                "updated_at": None
-            }
+            return _dossier(user_id, f"Your {ratings_count} ratings are saved. AI taste analysis is unavailable "
+                                     "until an API key is configured.", ratings_count)
 
         # Prepare ratings summary for the configured LLM
         loved_titles = []
@@ -243,85 +208,37 @@ Respond ONLY with a valid JSON object matching this schema:
 }}
 """
 
-        client = self._get_client()
         try:
-            response = await client.chat.completions.create(
-                model=settings.OPENROUTER_MODEL,
-                messages=[
-                    {"role": "system", "content": "You analyze user film taste and output strictly valid JSON."},
-                    {"role": "user", "content": prompt_content}
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.3
-            )
-            raw_json = response.choices[0].message.content
+            raw_json = await complete_json(self._get_client(), "You analyze user film taste and output strictly valid JSON.",
+                                           prompt_content, temperature=0.3)
             data = DossierContent.model_validate_json(raw_json).model_dump()
-
-            core_loves = data.get("core_loves", [])
-            deal_breakers = data.get("deal_breakers", [])
-            creator_affinities = data.get("creator_affinities", [])
-            atmospheric_preferences = data.get("atmospheric_preferences", [])
-            narrative_tropes = data.get("narrative_tropes", [])
-            full_summary = data.get("full_summary", "")
 
             with get_db() as conn:
                 conn.execute("BEGIN IMMEDIATE")
                 current_revision = conn.execute("SELECT revision FROM ratings_state WHERE id = 1").fetchone()[0]
+                # A rating written while the LLM was thinking keeps the dossier dirty.
                 is_dirty = current_revision != revision
-                conn.execute("""
+                conn.execute(f"""
                     INSERT INTO taste_dossiers (
-                        user_id, core_loves, deal_breakers, creator_affinities,
-                        atmospheric_preferences, narrative_tropes, full_summary,
+                        user_id, {", ".join(DOSSIER_LISTS)}, full_summary,
                         ratings_count_at_synthesis, is_dirty, evidence_version, updated_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
                     ON CONFLICT(user_id) DO UPDATE SET
+                        {", ".join(f"{key} = excluded.{key}" for key in DOSSIER_LISTS)},
                         evidence_version = excluded.evidence_version,
-                        core_loves = excluded.core_loves,
-                        deal_breakers = excluded.deal_breakers,
-                        creator_affinities = excluded.creator_affinities,
-                        atmospheric_preferences = excluded.atmospheric_preferences,
-                        narrative_tropes = excluded.narrative_tropes,
                         full_summary = excluded.full_summary,
                         ratings_count_at_synthesis = excluded.ratings_count_at_synthesis,
                         is_dirty = excluded.is_dirty,
                         updated_at = CURRENT_TIMESTAMP
-                """, (
-                    user_id,
-                    json.dumps(core_loves),
-                    json.dumps(deal_breakers),
-                    json.dumps(creator_affinities),
-                    json.dumps(atmospheric_preferences),
-                    json.dumps(narrative_tropes),
-                    full_summary,
-                    ratings_count,
-                    int(is_dirty),
-                ))
+                """, (user_id, *(json.dumps(data[key]) for key in DOSSIER_LISTS),
+                      data["full_summary"], ratings_count, int(is_dirty)))
 
-            return {
-                "user_id": user_id,
-                "core_loves": core_loves,
-                "deal_breakers": deal_breakers,
-                "creator_affinities": creator_affinities,
-                "atmospheric_preferences": atmospheric_preferences,
-                "narrative_tropes": narrative_tropes,
-                "full_summary": full_summary,
-                "ratings_count_at_synthesis": ratings_count,
-                "is_dirty": is_dirty,
-                "updated_at": None
-            }
+            return _dossier(user_id, data["full_summary"], ratings_count, is_dirty,
+                            **{key: data[key] for key in DOSSIER_LISTS})
         except Exception as e:
             logger.error(f"Error synthesizing taste dossier with configured LLM: {e}")
-            return {
-                "user_id": user_id,
-                "core_loves": [],
-                "deal_breakers": [],
-                "creator_affinities": [],
-                "atmospheric_preferences": [],
-                "narrative_tropes": [],
-                "full_summary": "Could not update your taste summary right now. Your ratings and notes are saved; please try again later.",
-                "ratings_count_at_synthesis": ratings_count,
-                "is_dirty": True,
-                "updated_at": None
-            }
+            return _dossier(user_id, "Could not update your taste summary right now. Your ratings and notes are "
+                                     "saved; please try again later.", ratings_count, is_dirty=True)
+
 
 taste_dossier_service = TasteDossierService()

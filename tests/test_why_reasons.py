@@ -88,13 +88,14 @@ async def test_why_reasons():
                 "reason": "High taste-vector similarity to your favorites."
             }
         ]
+        # Caches written by an older pipeline release are regenerated, not served.
         conn.execute("""
             UPDATE for_you_cache
-            SET picks_json = ?
+            SET picks_json = ?, pipeline_version = 0
             WHERE user_id = 'default_user' AND media_type = 'movie'
         """, (json.dumps(fake_stale_picks),))
 
-    # Next call without force_refresh should detect stale vector text and auto-refresh!
+    # Next call without force_refresh should detect the stale cache and auto-refresh!
     res_refreshed = await orchestrator_service.get_personalized_picks(limit=5, media_type_preference="movie", force_refresh=False)
     for p in res_refreshed["picks"]:
         assert "vector" not in p["reason"].lower(), f"Auto-refresh failed to clear vector jargon: {p['reason']}"
