@@ -32,7 +32,7 @@ def format_title_row(row) -> Dict[str, Any]:
         value = title.get(key)
         title[key] = json.loads(value) if isinstance(value, str) else (value or [])
     for key in ("original_title", "backdrop_path", "director_or_creator", "user_rating",
-                "user_notes", "suggestion_reason", "match_score"):
+                "user_notes", "suggestion_reason"):
         title.setdefault(key, None)
     title["is_in_watchlist"] = bool(title.get("is_in_watchlist"))
     title["is_suggestion"] = bool(title.get("is_suggestion"))

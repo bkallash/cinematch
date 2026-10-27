@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from app.bundled_config import DEFAULT_TMDB_API_KEY
+from app.cli import default_data_dir
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,7 +24,8 @@ class Settings(BaseSettings):
     TMDB_IMAGE_BASE_URL: str = Field(default="https://image.tmdb.org/t/p/w500", description="TMDB Poster CDN Base URL")
 
     # Database
-    DATABASE_PATH: Path = Field(default=BASE_DIR / "cinematch.db", description="Path to SQLite database")
+    # Same default as the CLI, so running uvicorn directly never writes into the installed package.
+    DATABASE_PATH: Path = Field(default_factory=lambda: default_data_dir() / "cinematch.db")
 
     # App Settings
     APP_PORT: int = Field(default=8000)

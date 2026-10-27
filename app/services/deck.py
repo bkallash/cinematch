@@ -6,13 +6,11 @@ import logging
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
-import numpy as np
-
 from app.config import settings
 from app.database import get_db
 from app.services.catalog import cache_tmdb_titles, format_title_row
-from app.services.embeddings import embedding_service
-from app.services.orchestrator import orchestrator_service
+from app.services.explain import personalized_reason
+from app.services.ranking import build_taste_signal, rank_candidates
 from app.services.tmdb import GENRE_NAME_TO_ID, tmdb_service
 
 logger = logging.getLogger(__name__)
@@ -28,6 +26,7 @@ DECK_MAX_TMDB_PAGE = 500
 DECK_REFILL_INSERT_LIMIT = 16
 
 _deck_refill_lock = asyncio.Lock()
+_refill_task = None  # held so the running refill is not garbage-collected
 
 UNSEEN_QUALITY = """
     FROM titles t
@@ -121,7 +120,8 @@ def schedule_deck_refill_if_needed() -> None:
             except Exception as e:
                 logger.error(f"Background deck refill error: {e}")
 
-    asyncio.get_running_loop().create_task(runner())
+    global _refill_task
+    _refill_task = asyncio.get_running_loop().create_task(runner())
 
 
 async def get_next_deck_title() -> Optional[Dict[str, Any]]:
@@ -193,40 +193,17 @@ async def get_deck_title_by_id(title_id: int) -> Optional[Dict[str, Any]]:
 
 
 async def get_deck_suggestion() -> Optional[Dict[str, Any]]:
-    """Return the unseen quality title closest to the user's taste, or None without enough signal."""
-    signal = orchestrator_service.build_taste_signal()
-    if signal.ratings_count < 2 or signal.taste_vector is None:
+    """The unseen quality title the For You ranker scores highest, or None without positive evidence."""
+    signal = build_taste_signal()
+    if signal.ratings_count < 2 or not signal.liked_count:
         return None
-
     with get_db() as conn:
-        rows = conn.execute(f"SELECT t.* {UNSEEN_QUALITY} AND t.embedding IS NOT NULL AND t.embedding_model = ?",
-                            (*QUALITY_FLOOR, embedding_service.model_key)).fetchall()
-
-    best = None
-    for row in rows:
-        vec = embedding_service.bytes_to_vec(row["embedding"])
-        if vec.shape != signal.taste_vector.shape or not np.isfinite(vec).all():
-            continue
-        sim = float(np.dot(vec, signal.taste_vector))
-        genres = json.loads(row["genres"] or "[]")
-        genre_matches = [g for g in genres if g in signal.liked_genres]
-        creator_match = bool(row["director_or_creator"] and row["director_or_creator"] in signal.liked_creators)
-        score = (sim + min((row["vote_average"] or 0.0) / 10.0, 1.0) * 0.05
-                 + min(len(genre_matches) * 0.15, 0.3) + (0.25 if creator_match else 0.0))
-        if best is None or score > best[0]:
-            best = (score, sim, row, genres, genre_matches, creator_match)
-
-    if best is None:
-        return None
-    _, sim, row, genres, genre_matches, creator_match = best
-    if sim < 0.35 and not genre_matches and not creator_match:
-        return None
-
-    if creator_match:
-        reason = f"Matches your affinity for {row['director_or_creator']}"
-    elif genre_matches:
-        reason = f"Matches your taste in {' & '.join(genre_matches[:2])}"
-    else:
-        reason = f"Tailored to your taste, offering a compelling {genres[0] if genres else 'film'} experience."
-    return {**format_title_row(row), "is_suggestion": True, "suggestion_reason": reason,
-            "match_score": min(98, max(75, int(sim * 100)))}
+        ineligible = {r[0] for r in conn.execute(f"SELECT id FROM titles EXCEPT SELECT t.id {UNSEEN_QUALITY}",
+                                                 QUALITY_FLOOR)}
+        ranked = rank_candidates({"_excluded_title_ids": ineligible}, signal=signal)
+        if not ranked or ranked[0]["raw_similarity"] <= 0:
+            return None
+        best = ranked[0]
+        row = conn.execute("SELECT * FROM titles WHERE id = ?", (best["title_id"],)).fetchone()
+    reason = personalized_reason(best, signal.liked_genres, signal.liked_creators, signal.loved_titles)
+    return {**format_title_row(row), "is_suggestion": True, "suggestion_reason": reason}

@@ -91,6 +91,7 @@ def _add_missing_columns(conn: sqlite3.Connection, table: str, columns: Dict[str
 
 def init_db():
     """Create tables and indexes if they do not exist."""
+    settings.DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with get_db() as conn:
         conn.executescript("""
         CREATE TABLE IF NOT EXISTS titles (
@@ -178,6 +179,7 @@ def init_db():
             role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
             content TEXT NOT NULL,
             recommended_title_ids TEXT DEFAULT '[]', -- JSON list of title_ids
+            recommendation_reasons TEXT DEFAULT '{}', -- JSON {title_id: reason}
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -233,6 +235,7 @@ def init_db():
         })
         _add_missing_columns(conn, "taste_dossiers", {"evidence_version": "INTEGER NOT NULL DEFAULT 0"})
         _add_missing_columns(conn, "deck_refill_state", {"serve_count": "INTEGER NOT NULL DEFAULT 0"})
+        _add_missing_columns(conn, "chat_messages", {"recommendation_reasons": "TEXT DEFAULT '{}'"})
         # Older releases created indexes that duplicate UNIQUE constraints.
         for index in ("idx_titles_tmdb", "idx_ratings_title", "idx_watchlist_title",
                       "idx_skipped_title", "idx_for_you_cache_user_media"):

@@ -12,13 +12,13 @@ import json
 from pathlib import Path
 import tempfile
 import time
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from app.config import settings
 from app.database import get_db, init_db
 from app.services.embeddings import embedding_service
-import app.services.orchestrator as orchestration
+import app.services.ranking as ranking
+from app.services import for_you, llm, taste_dossier
 from app.services.tmdb import tmdb_service
 
 
@@ -57,7 +57,7 @@ async def evaluate():
             patch.object(tmdb_service, "api_key", ""), \
             patch.object(settings, "EMBEDDING_PROVIDER", "local"), \
             patch.object(settings, "EMBEDDING_DIM", 1536), \
-            patch.object(orchestration, "datetime", FrozenTime):
+            patch.object(ranking, "datetime", FrozenTime):
         for profile in fixture["profiles"]:
             with patch.object(settings, "DATABASE_PATH", Path(directory) / (profile["name"] + ".db")):
                 init_db()
@@ -75,15 +75,13 @@ async def evaluate():
                         conn.execute("INSERT INTO ratings (title_id, score, created_at, updated_at) VALUES (?, ?, ?, ?)",
                                      (rating["id"], rating["score"], rating["at"], rating["at"]))
                 for media in ("movie", "tv"):
-                    service = orchestration.OrchestratorService()
                     captured = []
                     request_bytes = []
 
-                    async def provider(**kwargs):
-                        prompt = kwargs["messages"][-1]["content"]
+                    async def provider(system, prompt, temperature):
                         marker = "### Candidate"
                         if marker in prompt:
-                            request_bytes.append(len(json.dumps(kwargs).encode("utf-8")))
+                            request_bytes.append(len((system + prompt).encode("utf-8")))
                             tail = prompt.split(marker, 1)[1]
                             candidates, _ = json.JSONDecoder().raw_decode(tail[tail.index("["):])
                             captured.extend(c["title_id"] for c in candidates)
@@ -92,15 +90,14 @@ async def evaluate():
                                     "rejected_title_ids": []}
                         else:
                             data = {"full_summary": "Synthetic training evidence only."}
-                        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(data)))])
+                        return json.dumps(data)
 
-                    service._client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=AsyncMock(side_effect=provider))))
                     # Dossier is built offline, then remains cached during mocked reranking.
-                    await orchestration.taste_dossier_service.get_or_update_dossier()
+                    await taste_dossier.get_or_update_dossier()
                     started = time.perf_counter()
                     with patch.object(settings, "OPENROUTER_API_KEY", "synthetic-provider"), \
-                            patch.object(orchestration.taste_dossier_service, "_client", service._client):
-                        result = await service.get_personalized_picks(limit=10, media_type_preference=media)
+                            patch.object(llm, "complete_json", provider):
+                        result = await for_you.get_personalized_picks(limit=10, media_type_preference=media)
                     held = {r["id"]: r["score"] for r in profile["held_out"]
                             if fixture["titles"][r["id"] - 1]["media_type"] == media}
                     ids = [p["title_id"] for p in result["picks"]]

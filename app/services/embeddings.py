@@ -1,17 +1,12 @@
-import logging
 import hashlib
 import re
 import numpy as np
-from typing import List, Optional
-from openai import AsyncOpenAI
+from typing import List
 from app.config import settings
+from app.services import llm
 
-logger = logging.getLogger(__name__)
 
 class EmbeddingService:
-    def __init__(self):
-        self._client: Optional[AsyncOpenAI] = None
-
     @property
     def is_local(self) -> bool:
         return settings.EMBEDDING_PROVIDER == "local" or not settings.OPENROUTER_API_KEY
@@ -21,18 +16,6 @@ class EmbeddingService:
         model = "local:token-hash-v1" if self.is_local else f"openrouter:{settings.EMBEDDING_MODEL}"
         # Rebuild older metadata-rich vectors before comparing synopsis evidence.
         return f"{model}:{settings.EMBEDDING_DIM}:synopsis-v3"
-
-    def _get_client(self) -> AsyncOpenAI:
-        if self._client is None:
-            # OpenRouter acts as an OpenAI-compatible endpoint
-            api_key = settings.OPENROUTER_API_KEY or "dummy_key_for_init"
-            self._client = AsyncOpenAI(
-                api_key=api_key,
-                base_url=settings.OPENROUTER_BASE_URL,
-                timeout=30.0,
-                max_retries=1,
-            )
-        return self._client
 
     async def get_embedding(self, text: str) -> np.ndarray:
         """Generate normalized float32 vector embedding for text."""
@@ -51,7 +34,7 @@ class EmbeddingService:
                     for text in clean]
         if self.is_local:
             return [self._local_embedding(text) for text in clean]
-        response = await self._get_client().embeddings.create(
+        response = await llm.get_client().embeddings.create(
             model=settings.EMBEDDING_MODEL, input=clean, dimensions=settings.EMBEDDING_DIM,
         )
         items = sorted(response.data, key=lambda item: item.index)

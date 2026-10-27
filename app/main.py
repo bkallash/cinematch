@@ -16,15 +16,17 @@ from app.database import get_db, init_db
 from app.models.schemas import RatingCreate
 from app.services.catalog import ensure_title_embedding, popular_titles, search_catalog
 from app.services.deck import get_deck_title_by_id, get_next_deck_title
-from app.services.orchestrator import orchestrator_service
+from app.services.chat import handle_vibe_query
+from app.services.for_you import get_personalized_picks
 from app.services.seeder import seed_starter_catalog
-from app.services.taste_dossier import taste_dossier_service
+from app.services.taste_dossier import get_or_update_dossier
 from app.services.tmdb import tmdb_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("cinematch")
 
 BASE_DIR = Path(__file__).resolve().parent
+_background_tasks: set = set()  # the event loop keeps only weak references to tasks
 
 
 @asynccontextmanager
@@ -35,6 +37,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Error running starter catalog seeder: {e}")
     yield
+    await tmdb_service.aclose()
 
 
 app = FastAPI(title="CineMatch", description="AI-Powered Movie & Series Suggestion App", lifespan=lifespan)
@@ -81,7 +84,7 @@ def load_chat_messages(session_id: str) -> list:
     """Rebuild a saved chat with its recommendation cards."""
     with get_db() as conn:
         rows = conn.execute("""
-            SELECT role, content, recommended_title_ids FROM chat_messages
+            SELECT role, content, recommended_title_ids, recommendation_reasons FROM chat_messages
             WHERE session_id = ? ORDER BY created_at ASC
         """, (session_id,)).fetchall()
         rec_ids = [json.loads(r["recommended_title_ids"] or "[]") for r in rows]
@@ -92,21 +95,20 @@ def load_chat_messages(session_id: str) -> list:
             WHERE t.id IN ({",".join("?" * len(all_ids))})
         """, all_ids)}
 
-    def card(t):
-        genres = json.loads(t["genres"] or "[]")
-        # shortcut: reasons are not stored with chat history, so a saved chat shows a generic one.
-        genre_note = f"in {' & '.join(genres[:2])}" if genres else "in cinema"
+    def card(t, reasons):
+        # Messages saved before reasons were stored fall back to a generic line.
         return {
             "title_id": t["id"], "tmdb_id": t["tmdb_id"], "media_type": t["media_type"],
             "title": t["title"], "release_year": t["release_year"], "poster_path": t["poster_path"],
-            "genres": genres, "overview": t["overview"],
-            "reason": f"Curated for you based on your taste {genre_note}.",
+            "genres": json.loads(t["genres"] or "[]"), "overview": t["overview"],
+            "reason": reasons.get(str(t["id"]), "Recommended earlier in this chat."),
             "is_on_watchlist": bool(t["is_on_watchlist"]), "vote_average": t["vote_average"],
             "imdb_rating": t["imdb_rating"] or t["vote_average"], "imdb_id": t["imdb_id"],
         }
 
     return [{"role": r["role"], "content": r["content"],
-             "recommendations": [card(titles[tid]) for tid in ids if tid in titles]}
+             "recommendations": [card(titles[tid], json.loads(r["recommendation_reasons"] or "{}"))
+                                 for tid in ids if tid in titles]}
             for r, ids in zip(rows, rec_ids)]
 
 
@@ -136,7 +138,7 @@ async def page_search(request: Request, q: Optional[str] = None):
 async def page_library(request: Request, tab: str = "ratings"):
     ratings, watchlist, dossier = [], [], {}
     if tab == "dossier":
-        dossier = await taste_dossier_service.get_or_update_dossier()
+        dossier = await get_or_update_dossier()
     elif tab == "watchlist":
         with get_db() as conn:
             rows = conn.execute("""
@@ -165,7 +167,7 @@ async def page_library(request: Request, tab: str = "ratings"):
 async def page_for_you(request: Request, media_type: str = "movie", refresh: bool = False):
     """Personal shelf: the 5 Movies or Series most likely to be liked."""
     media_type = normalize_media_type(media_type)
-    result = await orchestrator_service.get_personalized_picks(
+    result = await get_personalized_picks(
         limit=5, media_type_preference=media_type, force_refresh=refresh)
     return render_page(request, "for_you.html", "for-you", media_type=media_type, **result)
 
@@ -179,7 +181,7 @@ async def api_for_you(request: Request, media_type: str = "movie", limit: int = 
                       refresh: bool = False, format: Optional[str] = None):
     """HTMX partial (or JSON with ?format=json) for the personalized shelf."""
     media_type = normalize_media_type(media_type)
-    result = await orchestrator_service.get_personalized_picks(
+    result = await get_personalized_picks(
         limit=max(1, min(limit, 10)), media_type_preference=media_type, force_refresh=refresh)
     if format == "json" or "application/json" in request.headers.get("accept", ""):
         return JSONResponse(content=result)
@@ -200,7 +202,7 @@ async def api_for_you_skip(request: Request, title_id: int, media_type: str = "m
 async def api_chat(message: str = Form(...), session_id: str = Form("default_session"),
                    media_type: str = Form("all")):
     """Answer a chat request and return the rendered user + assistant messages."""
-    result = await orchestrator_service.handle_vibe_query(
+    result = await handle_vibe_query(
         query_text=message, session_id=session_id, media_type_preference=media_type)
     template = templates.get_template("components/chat_message.html")
     return HTMLResponse(
@@ -258,7 +260,9 @@ async def api_save_rating(payload: RatingCreate):
         conn.execute("DELETE FROM skipped_titles WHERE title_id = ?", (payload.title_id,))
 
     # Rated titles need full details and an embedding to inform recommendations.
-    asyncio.create_task(ensure_title_embedding(payload.title_id))
+    task = asyncio.create_task(ensure_title_embedding(payload.title_id))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     return {"status": "ok", "title_id": payload.title_id, "score": payload.score}
 
 
@@ -297,5 +301,5 @@ async def api_stats(request: Request):
 
 @app.post("/api/dossier/regenerate", response_class=HTMLResponse)
 async def api_dossier_regenerate(request: Request):
-    dossier = await taste_dossier_service.get_or_update_dossier(force=True)
+    dossier = await get_or_update_dossier(force=True)
     return render_component(request, "dossier.html", dossier=dossier)

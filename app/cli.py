@@ -84,6 +84,9 @@ def main() -> None:
         configure_openrouter(user_env_path)
 
     os.environ.setdefault("DATABASE_PATH", str(data_dir / "cinematch.db"))
+    if args.host not in ("127.0.0.1", "localhost", "::1"):
+        # There is no login: anyone who can reach the server can read the library and spend API credit.
+        print(f"Warning: listening on {args.host} exposes CineMatch without authentication.", file=sys.stderr)
 
     from app.config import settings
     import uvicorn

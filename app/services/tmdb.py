@@ -68,6 +68,19 @@ class TMDBService:
         self.api_key = settings.TMDB_API_KEY
         self.base_url = settings.TMDB_BASE_URL
         self.image_base_url = settings.TMDB_IMAGE_BASE_URL
+        self._client: Optional[httpx.AsyncClient] = None
+
+    @property
+    def client(self) -> httpx.AsyncClient:
+        # One pooled client reuses connections across requests.
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=10.0)
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
 
     def _get_headers(self) -> Dict[str, str]:
         headers = {"Accept": "application/json"}
@@ -80,20 +93,16 @@ class TMDBService:
         params = {"api_key": self.api_key} if 0 < len(self.api_key) <= 50 else {}
         return {**params, **(extra or {})}
 
-    async def _get(self, client: httpx.AsyncClient, path: str, **params) -> Optional[Dict[str, Any]]:
+    async def _get(self, path: str, **params) -> Optional[Dict[str, Any]]:
         """GET a TMDB endpoint; log and return None on any failure."""
         try:
-            response = await client.get(f"{self.base_url}/{path}", params=self._get_params(params),
-                                        headers=self._get_headers())
+            response = await self.client.get(f"{self.base_url}/{path}", params=self._get_params(params),
+                                             headers=self._get_headers())
             response.raise_for_status()
             return response.json()
         except Exception as e:
             logger.error(f"TMDB request {path} failed: {type(e).__name__}")
             return None
-
-    async def _get_once(self, path: str, timeout: float = 10.0, **params) -> Optional[Dict[str, Any]]:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            return await self._get(client, path, **params)
 
     def get_poster_url(self, poster_path: Optional[str]) -> str:
         if not poster_path:
@@ -106,7 +115,7 @@ class TMDBService:
         """Search movies and TV series across TMDB."""
         if not query.strip() or not self.api_key:
             return []
-        data = await self._get_once("search/multi", query=query.strip(), page=page, include_adult=False) or {}
+        data = await self._get("search/multi", query=query.strip(), page=page, include_adult=False) or {}
         return [_parse_item(item, item["media_type"]) for item in data.get("results", [])
                 if item.get("media_type") in ("movie", "tv")]
 
@@ -114,8 +123,7 @@ class TMDBService:
         """Fetch full title details with credits and directors."""
         if not self.api_key:
             return None
-        data = await self._get_once(f"{media_type}/{tmdb_id}", timeout=12.0,
-                                    append_to_response="credits,external_ids")
+        data = await self._get(f"{media_type}/{tmdb_id}", append_to_response="credits,external_ids")
         if not data:
             return None
 
@@ -156,24 +164,23 @@ class TMDBService:
 
         seen: set[tuple[int, str]] = set()
         collected: List[Dict[str, Any]] = []
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            for media_type in ("movie", "tv"):
-                for category in ("top_rated", "popular"):
-                    for page in range(start_page, start_page + pages_per_endpoint):
-                        data = await self._get(client, f"{media_type}/{category}", page=page, include_adult=False)
-                        if data is None:
-                            break
-                        # Deeper pages relax the vote floor a little, never below 400.
-                        min_votes = max(400, min_vote_count - (page // 5) * 50)
-                        for item in data.get("results", []):
-                            if item.get("id") is None or (item["id"], media_type) in seen:
-                                continue
-                            seen.add((item["id"], media_type))
-                            title = _parse_item(item, media_type)
-                            if title["vote_count"] >= min_votes and title["vote_average"] >= min_vote_average:
-                                collected.append(title)
-                        if page >= int(data.get("total_pages", page)):
-                            break
+        for media_type in ("movie", "tv"):
+            for category in ("top_rated", "popular"):
+                for page in range(start_page, start_page + pages_per_endpoint):
+                    data = await self._get(f"{media_type}/{category}", page=page, include_adult=False)
+                    if data is None:
+                        break
+                    # Deeper pages relax the vote floor a little, never below 400.
+                    min_votes = max(400, min_vote_count - (page // 5) * 50)
+                    for item in data.get("results", []):
+                        if item.get("id") is None or (item["id"], media_type) in seen:
+                            continue
+                        seen.add((item["id"], media_type))
+                        title = _parse_item(item, media_type)
+                        if title["vote_count"] >= min_votes and title["vote_average"] >= min_vote_average:
+                            collected.append(title)
+                    if page >= int(data.get("total_pages", page)):
+                        break
 
         collected.sort(key=lambda x: (x["vote_count"], x["popularity"]), reverse=True)
         return collected[:limit]
@@ -183,19 +190,18 @@ class TMDBService:
         """Fetch recommended titles from TMDB based on a specific title."""
         if not self.api_key or not tmdb_id:
             return []
-        data = await self._get_once(f"{media_type}/{tmdb_id}/recommendations", page=1) or {}
+        data = await self._get(f"{media_type}/{tmdb_id}/recommendations", page=1) or {}
         return [_parse_item(item, media_type) for item in data.get("results", [])[:limit]]
 
     async def find_person_titles(self, name: str, media_type: str) -> List[Dict[str, Any]]:
         """Find acting/directing credits before fetching full title details."""
         if not self.api_key:
             return []
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            people = (await self._get(client, "search/person", query=name) or {}).get("results", [])
-            person = next((p for p in people if p["name"].casefold() == name.strip().casefold()), None)
-            if person is None:
-                return []
-            credits = await self._get(client, f"person/{person['id']}/combined_credits") or {}
+        people = (await self._get("search/person", query=name) or {}).get("results", [])
+        person = next((p for p in people if p["name"].casefold() == name.strip().casefold()), None)
+        if person is None:
+            return []
+        credits = await self._get(f"person/{person['id']}/combined_credits") or {}
 
         results = {}
         for role in ("cast", "crew"):
@@ -248,7 +254,7 @@ class TMDBService:
         if year_max:
             params[f"{date_field}.lte"] = f"{year_max}-12-31"
 
-        data = await self._get_once(f"discover/{media_type}", **params) or {}
+        data = await self._get(f"discover/{media_type}", **params) or {}
         return [_parse_item(item, media_type) for item in data.get("results", [])[:limit]]
 
 
